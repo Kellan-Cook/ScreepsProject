@@ -1,0 +1,12 @@
+{
+    "typeAcquisition": {
+        "include": [
+            "screeps",
+            "lodash"
+        ]
+    },
+    "dependencies": {
+        "@types/lodash": "^4.14.202",
+        "@types/screeps": "^3.3.7"
+    }
+}
