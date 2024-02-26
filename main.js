@@ -46,8 +46,16 @@ module.exports.loop = function () {
     }
         
     
-    
-    
+    //runs the spawn specific code / room managment code
+    for(var spawn in Game.spawns){
+
+
+        functionSpawn.run(spawner);
+
+
+
+
+    }
     
     
     

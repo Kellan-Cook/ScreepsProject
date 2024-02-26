@@ -1,32 +1,49 @@
 var functionSpawn = {
 
- run: function(spawns, creepcount, ctype) {
+ run: function(spawner) {
      
-     var spawnEng = Game.spawns['Spawn1'].room.energyAvailable;
-    console.log('spawner energy: ' + spawnEng);
+     var spawnEng = Game.spawns[spawner].room.energyAvailable;
+    console.log('spawner energy: ' + spawner + " - "+ spawnEng);
+    
+    if(Structure.memory.firstrun != false){
+        Structure.memory.roomsources = Room.find(FIND_SOURCES);
+
+        Structure.memory.firstrun = true;
+    }
+
+
+
+
     if(spawns.spawning == null){
     console.log('creep count at build: ' + creepcount)
     
         
         
+        var roomcreepsharvester = _.filter(Game.creeps, (creep) => creep.memory.homespawner == Game.spawns[spawner]);
+
         
-        if(ctype == 'harvester'){
+
+
+        var sources = Structure.memory.roomsources;
+
+
+        if(roomcreepsharvester < sources.length){
             var newName = 'harvester' + Game.time;
             if(spawnEng == 300 && spawns.spawning == null){
                 console.log('Spawning new harvester 1: ' + newName);
-                spawns.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting'}});
+                spawns.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: Game.spawns[spawner]}});
             }
             if(spawnEng >= 400 && spawnEng < 600 && spawns.spawning == null){
                 console.log('Spawning new harvester 2: ' + newName);
-                spawns.spawnCreep([WORK,WORK,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting'}});
+                spawns.spawnCreep([WORK,WORK,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: Game.spawns[spawner]}});
             }
             if(spawnEng >= 600 && spawns.spawning == null){
                 console.log('Spawning new harvester 3: ' + newName);
-                spawns.spawnCreep([WORK,WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting'}});
+                spawns.spawnCreep([WORK,WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: Game.spawns[spawner]}});
             }
             if(creepcount == 0 && spawns.spawning == null){
                 console.log('Spawning new harvester basic: ' + newName);
-                spawns.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting'}});
+                spawns.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: Game.spawns[spawner]}});
                 
             }
             
