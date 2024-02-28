@@ -90,8 +90,10 @@ var functionSpawn = {
 
             var harvesterbodygroup = spawnEng / 400;
             var bodysize = [];
-            while(harvesterbodygroup >= 1){
-                bodysize.push(WORK,WORK,CARRY,CARRY,CARRY,MOVE)
+            if(spawnEng >= 400){
+                while(harvesterbodygroup >= 1){
+                    bodysize.push(WORK,WORK,CARRY,CARRY,CARRY,MOVE)
+                }
 
             }
 
@@ -101,7 +103,7 @@ var functionSpawn = {
                 spawner.spawnCreep(bodysize, newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
             }
 
-            if(roomcreepsharvester.length == 0 && spawner.spawning == null){
+            if(roomcreepsharvester.length == 0 && spawner.spawning == null || spawnEng < 400){
                 console.log('Spawning new harvester basic: ' + newName);
                 spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
                 
