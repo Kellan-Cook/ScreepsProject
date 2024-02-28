@@ -9,45 +9,31 @@ var functionSpawn = {
       spawner.memory.firstrun = false;
     }
 
+    var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
 
-    var hostile = spawner.room.find(FIND_HOSTILE_CREEPS)
-
-
-    if(hostile > 0){
-
-        Game.notify("SPWNER: " + spawner.name + "DETECTED HOSTILE" + hostile[0].owner.name)
-
-        
-
-
-
+    if (hostile > 0) {
+      Game.notify(
+        "SPWNER: " + spawner.name + "DETECTED HOSTILE" + hostile[0].owner.name
+      );
+      console.log("HOSTLE DETECTED: " + hostile[0].owner.name);
     }
-
-
-
-
 
     if (spawner.spawning == null) {
       //console.log('creep count at build: ' + creepcount)
 
-
-        if(hostile > 0){
-
-            var newName = "rangedefender" + Game.time;
-            if (spawnEng >= 450 && spawner.spawning == null) {
-                console.log("Spawning new upgrader: " + newName);
-                spawner.spawnCreep([RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE], newName, {
-                memory: { role: "ragedefender", homespawner: spawner.name },
-                });
+      if (hostile > 0) {
+        var newName = "rangedefender" + Game.time;
+        if (spawnEng >= 450 && spawner.spawning == null) {
+          console.log("Spawning new upgrader: " + newName);
+          spawner.spawnCreep(
+            [RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE],
+            newName,
+            {
+              memory: { role: "ragedefender", homespawner: spawner.name },
             }
+          );
         }
-    
-
-
-
-
-
-
+      }
 
       var roomcreepsharvester = spawner.room.find(FIND_MY_CREEPS, {
         filter: (x) => {
@@ -84,7 +70,6 @@ var functionSpawn = {
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
 
-
       if (roomcreepsharvester.length < sources.length) {
         var goodtarget = spawner.memory.roomsources;
         var optimaltarget = spawner.memory.roomsources;
@@ -92,7 +77,6 @@ var functionSpawn = {
         roomcreepsharvester.forEach(function (arrayItem) {
           goodtarget.forEach(function (goodItem) {
             var obj = arrayItem.memory.roomsources;
-
 
             if (goodItem.id == obj) {
               console.log("SLICED: " + goodItem.id);
@@ -106,7 +90,6 @@ var functionSpawn = {
               });
               console.log("after : " + optimaltarget[0].id);
             }
-
           });
         });
 
