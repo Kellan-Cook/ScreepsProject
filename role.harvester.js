@@ -3,12 +3,13 @@ var roleHarvester = {
     /** @param {Creep} creep **/
     run: function(creep) {
         
-        if(creep.store.getUsedCapacity >= creep.store.getCapacity){
+        if(creep.store.getUsedCapacity() == creep.store.getCapacity()){
             
-            creep.memory.task == 'storing';
+            creep.memory.task = 'storing';
         }
-        if(creep.store.getUsedCapacity <= 0){ 
-            creep.memory.task == 'harvesting';
+
+        if(creep.store.getUsedCapacity() == 0){ 
+            creep.memory.task = 'harvesting';
         }
         
 	    if(creep.memory.task == 'harvesting') {
