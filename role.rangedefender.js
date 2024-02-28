@@ -7,8 +7,8 @@ var roleBuilder = {
 
         if(targets.length > 0){
 
-            if(creep.rangedAttack(targetsource) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(targets, {visualizePathStyle: {stroke: '#ffaa00'}});
+            if(creep.rangedAttack(targets[0]) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffaa00'}});
             }
 
         }
@@ -17,3 +17,4 @@ var roleBuilder = {
     }
 
 }
+module.exports = rolerangedefender

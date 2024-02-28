@@ -11,17 +11,17 @@ var functionSpawn = {
 
     var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
 
-    if (hostile > 0) {
+    if (hostile.length > 0) {
       Game.notify(
         "SPWNER: " + spawner.name + "DETECTED HOSTILE" + hostile[0].owner.name
       );
-      console.log("HOSTLE DETECTED: " + hostile[0].owner.name);
+      console.log("HOSTLE DETECTED: " + hostile[0].id);
     }
 
     if (spawner.spawning == null) {
       //console.log('creep count at build: ' + creepcount)
 
-      if (hostile > 0) {
+      if (hostile.length > 0) {
         var newName = "rangedefender" + Game.time;
         if (spawnEng >= 450 && spawner.spawning == null) {
           console.log("Spawning new upgrader: " + newName);
@@ -29,7 +29,7 @@ var functionSpawn = {
             [RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE],
             newName,
             {
-              memory: { role: "ragedefender", homespawner: spawner.name },
+              memory: { role: "rangedefender", homespawner: spawner.name },
             }
           );
         }
