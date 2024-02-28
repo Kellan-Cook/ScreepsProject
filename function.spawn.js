@@ -91,8 +91,9 @@ var functionSpawn = {
             var harvesterbodygroup = spawnEng / 400;
             var bodysize = [];
             if(spawnEng >= 400){
-                while(harvesterbodygroup >= 1){
+                while(harvesterbodygroup > 0){
                     bodysize.push(WORK,WORK,CARRY,CARRY,CARRY,MOVE)
+                    harvesterbodygroup = harvesterbodygroup - 1;
                 }
 
             }
