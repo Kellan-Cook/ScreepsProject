@@ -3,18 +3,17 @@ var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
 var roleRepair = require('role.repair')
 var functionSpawn = require('function.spawn');
-var roomBuilder = require('roomBuilder');
+//var roomBuilder = require('roomBuilder');
 
 
 
 module.exports.loop = function () {
     
-    
+    //runs the spawn specific code / room managment code
     for(var CurSpawn in Game.spawns){
-        
-        //roomBuilder.run(Game.spawns[CurSpawn]);
+        functionSpawn.run(CurSpawn);
     }
-
+    
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {
             delete Memory.creeps[name];
@@ -46,8 +45,8 @@ module.exports.loop = function () {
     }
         
     
-    
-    
+
+
     
     
     
@@ -67,8 +66,8 @@ module.exports.loop = function () {
     
     
     
-    
-    if(harvesterNumber.length < 4){
+
+   /* if(harvesterNumber.length < 4){
         for(var name in Game.spawns){
             var spawner = Game.spawns[name];
             functionSpawn.run(spawner, harvesterNumber.length, 'harvester');
@@ -106,15 +105,15 @@ module.exports.loop = function () {
         }
         
         
+
         
         
-        
-    }
+    }*/
 
 
 
    
-    
+    /*
     if(Game.spawns['Spawn1'].spawning) { 
         var spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];
         Game.spawns['Spawn1'].room.visual.text(
@@ -123,7 +122,7 @@ module.exports.loop = function () {
             Game.spawns['Spawn1'].pos.y, 
             {align: 'left', opacity: 0.8});
     }
-
+*/
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
         if(creep.memory.role == 'harvester') {

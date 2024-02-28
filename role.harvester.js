@@ -14,9 +14,11 @@ var roleHarvester = {
 	    if(creep.store.getUsedCapacity(RESOURCE_ENERGY) != creep.store.getCapacity(RESOURCE_ENERGY)) {
             var sources = creep.room.find(FIND_SOURCES);
             
-            var nearest_source = creep.pos.findClosestByPath(FIND_SOURCES, {filter: (source) => { return source.Energy != 0}});
-            if(creep.harvest(nearest_source) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(nearest_source, {visualizePathStyle: {stroke: '#ffaa00'}});
+            
+            var targetsource = Game.getObjectById(creep.memory.roomsources);
+
+            if(creep.harvest(targetsource) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(targetsource, {visualizePathStyle: {stroke: '#ffaa00'}});
             }
         }
         else {
