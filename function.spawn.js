@@ -103,7 +103,7 @@ var functionSpawn = {
                 spawner.spawnCreep(bodysize, newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
             }
 
-            if(roomcreepsharvester.length == 0 && spawner.spawning == null || spawnEng < 400){
+            if(roomcreepsharvester.length == 0 && spawner.spawning == null || spawnEng < 400 && spawner.spawning == null){
                 console.log('Spawning new harvester basic: ' + newName);
                 spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
                 
