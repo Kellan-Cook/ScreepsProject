@@ -84,8 +84,7 @@ var functionSpawn = {
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
 
-      console.log("harvest: " + roomcreepsharvester.length);
-      console.log("sources: " + sources.length);
+
       if (roomcreepsharvester.length < sources.length) {
         var goodtarget = spawner.memory.roomsources;
         var optimaltarget = spawner.memory.roomsources;
@@ -93,8 +92,7 @@ var functionSpawn = {
         roomcreepsharvester.forEach(function (arrayItem) {
           goodtarget.forEach(function (goodItem) {
             var obj = arrayItem.memory.roomsources;
-            console.log("check1: " + goodItem.id);
-            console.log("check2: " + obj);
+
 
             if (goodItem.id == obj) {
               console.log("SLICED: " + goodItem.id);
@@ -108,7 +106,7 @@ var functionSpawn = {
               });
               console.log("after : " + optimaltarget[0].id);
             }
-            console.log("running: " + arrayItem);
+
           });
         });
 
