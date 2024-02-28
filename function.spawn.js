@@ -190,7 +190,9 @@ var functionSpawn = {
               { memory: { role: "repairer", homespawner: spawner.name } }
             );
           }
-          if (roomcreepstoragemanager.length < 1) {
+
+        }
+        if (roomcreepstoragemanager.length < 1) {
             var newName = "storagemanager" + Game.time;
             if (spawnEng >= 400 && spawner.spawning == null) {
               console.log("spawning new storagemanager: " + newName);
@@ -201,7 +203,6 @@ var functionSpawn = {
               );
             }
           }
-        }
 
       }
     }
