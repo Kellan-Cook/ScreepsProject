@@ -1,4 +1,4 @@
-var roleBuilder = {
+var rolerangedefender = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
