@@ -3,6 +3,7 @@ var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
 var roleRepair = require('role.repair')
 var functionSpawn = require('function.spawn');
+var roleRangeDefender = require('role.rangedefender');
 //var roomBuilder = require('roomBuilder');
 
 
@@ -125,6 +126,9 @@ module.exports.loop = function () {
 */
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
+        if(creep.memory.role == 'ragedefender'){
+            roleRangeDefender.run(creep);
+        }
         if(creep.memory.role == 'harvester') {
             roleHarvester.run(creep);
         }
