@@ -86,18 +86,21 @@ var functionSpawn = {
             //var optimaltarget = spawner.pos.findClosestByPath(goodtarget); //TODO: curently returns null to fix to get closets path
             
             var newName = 'harvester' + Game.time;
-            if(spawnEng == 300 && spawner.spawning == null){
+
+
+            var harvesterbodygroup = spawnEng / 400;
+            var bodysize = [];
+            while(harvesterbodygroup >= 1){
+                bodysize.push(WORK,WORK,CARRY,CARRY,CARRY,MOVE)
+
+            }
+
+
+            if(spawner.spawning == null){
                 console.log('Spawning new harvester 1: ' + newName);
-                spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
+                spawner.spawnCreep(bodysize, newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
             }
-            if(spawnEng >= 400 && spawnEng < 600 && spawner.spawning == null){
-                console.log('Spawning new harvester 2: ' + newName);
-                spawner.spawnCreep([WORK,WORK,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
-            }
-            if(spawnEng >= 600 && spawner.spawning == null){
-                console.log('Spawning new harvester 3: ' + newName);
-                spawner.spawnCreep([WORK,WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
-            }
+
             if(roomcreepsharvester.length == 0 && spawner.spawning == null){
                 console.log('Spawning new harvester basic: ' + newName);
                 spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'harvester', task: 'harvesting', homespawner: spawner.name, roomsources: optimaltarget[0].id }});
@@ -110,14 +113,14 @@ var functionSpawn = {
                 var newName = 'upgrader' + Game.time;
                 if(spawnEng == 300 && spawner.spawning == null){
                     console.log('Spawning new upgrader: ' + newName);
-                    spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'upgrader'}});
+                    spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'upgrader', homespawner: spawner.name}});
                 }
                 if(spawnEng >= 400 && spawner.spawning == null){
-                    spawner.spawnCreep([WORK,WORK,CARRY,CARRY,CARRY,MOVE], newName, {memory: {role: 'upgrader'}});
+                    spawner.spawnCreep([WORK,WORK,CARRY,CARRY,CARRY,MOVE], newName, {memory: {role: 'upgrader', homespawner: spawner.name}});
             
                 }    
                 if(spawnEng >= 600 && spawner.spawning == null){
-                    spawner.spawnCreep([WORK,WORK,WORK,,WORK,CARRY,CARRY,CARRY,MOVE], newName, {memory: {role: 'upgrader'}});
+                    spawner.spawnCreep([WORK,WORK,WORK,,WORK,CARRY,CARRY,CARRY,MOVE], newName, {memory: {role: 'upgrader', homespawner: spawner.name}});
             
                 }
             
@@ -128,14 +131,14 @@ var functionSpawn = {
                 var newName = 'builder' + Game.time;
             if(spawnEng == 300 && spawner.spawning == null){
                 console.log('Spawning new builder: ' + newName);
-                spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'builder'}});
+                spawner.spawnCreep([WORK,WORK,CARRY,MOVE], newName, {memory: {role: 'builder', homespawner: spawner.name}});
             }
             if(spawnEng >= 400 && spawner.spawning == null){
-                spawner.spawnCreep([WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'builder'}});
+                spawner.spawnCreep([WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'builder', homespawner: spawner.name}});
                 
             }
             if(spawnEng >= 600 && spawner.spawning == null){
-                spawner.spawnCreep([WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'builder'}});
+                spawner.spawnCreep([WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'builder', homespawner: spawner.name}});
             }
             
             
@@ -144,7 +147,7 @@ var functionSpawn = {
                 var newName = 'repairer' + Game.time;
                 if(spawnEng >= 400 && spawner.spawning == null){
                     console.log('spawning new repairer: ' + newName)
-                    spawner.spawnCreep([WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'repairer'}})
+                    spawner.spawnCreep([WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: 'repairer', homespawner: spawner.name}})
                 
                 }
             
