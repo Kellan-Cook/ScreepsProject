@@ -31,19 +31,17 @@ var functionSpawn = {
       //console.log('creep count at build: ' + creepcount)
 
 
-      if(hostile > 0){
+        if(hostile > 0){
 
-        var newName = "rangedefender" + Game.time;
-        if (spawnEng >= 450 && spawner.spawning == null) {
-          console.log("Spawning new upgrader: " + newName);
-          spawner.spawnCreep([RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE], newName, {
-            memory: { role: "ragedefender", homespawner: spawner.name },
-          });
-
-
-
-
-      }
+            var newName = "rangedefender" + Game.time;
+            if (spawnEng >= 450 && spawner.spawning == null) {
+                console.log("Spawning new upgrader: " + newName);
+                spawner.spawnCreep([RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE], newName, {
+                memory: { role: "ragedefender", homespawner: spawner.name },
+                });
+            }
+        }
+    
 
 
 
