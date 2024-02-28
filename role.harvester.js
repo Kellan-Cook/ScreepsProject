@@ -11,9 +11,7 @@ var roleHarvester = {
             creep.memory.task == 'harvesting';
         }
         
-	    if(creep.store.getUsedCapacity(RESOURCE_ENERGY) != creep.store.getCapacity(RESOURCE_ENERGY)) {
-            var sources = creep.room.find(FIND_SOURCES);
-            
+	    if(creep.store.getUsedCapacity(RESOURCE_ENERGY) != 0) {
             
             var targetsource = Game.getObjectById(creep.memory.roomsources);
 
