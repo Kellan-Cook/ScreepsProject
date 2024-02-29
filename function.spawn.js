@@ -69,7 +69,8 @@ var functionSpawn = {
       var roomcreepstoragemanager = spawner.room.find(FIND_MY_CREEPS, {
         filter: (x) => {
           return (
-            x.memory.homespawner == spawner.name && x.memory.role == "storagemanager"
+            x.memory.homespawner == spawner.name &&
+            x.memory.role == "storagemanager"
           );
         },
       });
@@ -150,14 +151,17 @@ var functionSpawn = {
           }
           if (spawnEng >= 600 && spawner.spawning == null) {
             spawner.spawnCreep(
-              [WORK, WORK, WORK, , WORK, CARRY, CARRY, CARRY, MOVE],
+              [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE],
               newName,
               { memory: { role: "upgrader", homespawner: spawner.name } }
             );
           }
         }
 
-        if (roomcreepsbuilder.length < 2 && spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
+        if (
+          roomcreepsbuilder.length < 2 &&
+          spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0
+        ) {
           var newName = "builder" + Game.time;
           if (spawnEng == 300 && spawner.spawning == null) {
             console.log("Spawning new builder: " + newName);
@@ -190,20 +194,56 @@ var functionSpawn = {
               { memory: { role: "repairer", homespawner: spawner.name } }
             );
           }
-
         }
         if (roomcreepstoragemanager.length < 1) {
-            var newName = "storagemanager" + Game.time;
-            if (spawnEng >= 400 && spawner.spawning == null) {
-              console.log("spawning new storagemanager: " + newName);
-              spawner.spawnCreep(
-                [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
-                newName,
-                { memory: { role: "storagemanager", homespawner: spawner.name} }
-              );
-            }
+          var newName = "storagemanager" + Game.time;
+          if (spawnEng >= 400 && spawner.spawning == null) {
+            console.log("spawning new storagemanager: " + newName);
+            spawner.spawnCreep(
+              [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
+              newName,
+              { memory: { role: "storagemanager", homespawner: spawner.name } }
+            );
           }
-
+        }
+        console.log(
+          spawner.room.controller.level +
+            " - " +
+            roomcreepsupgrader.length +
+            " - " +
+            spawnEng
+        );
+        if (
+          spawner.spawning == null &&
+          spawner.room.controller.level < 8 &&
+          roomcreepsupgrader.length < 6 &&
+          spawnEng >= 1000
+        ) {
+          var newName = "upgrader" + Game.time;
+          var upgraderbodygroup = Math.floor(spawnEng / 600);
+          var bodysize = [];
+          while (upgraderbodygroup > 0) {
+            bodysize.push(WORK, WORK, CARRY, CARRY, CARRY, MOVE);
+            upgraderbodygroup = upgraderbodygroup - 1;
+          }
+          spawner.spawnCreep(
+            [
+              WORK,
+              WORK,
+              WORK,
+              WORK,
+              CARRY,
+              CARRY,
+              CARRY,
+              CARRY,
+              CARRY,
+              MOVE,
+              MOVE,
+            ],
+            newName,
+            { memory: { role: "upgrader", homespawner: spawner.name } }
+          );
+        }
       }
     }
   },
