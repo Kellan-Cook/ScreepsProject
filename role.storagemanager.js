@@ -34,7 +34,6 @@ var rolestoragemanager = {
     }
 
     if ((creep.memory.task = "storing")) {
-      console.log("test");
 
       var targetstorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -45,9 +44,9 @@ var rolestoragemanager = {
           );
         },
       });
-      console.log(targetstorage);
+
       if (targetstorage != null) {
-        console.log(targetstorage);
+
         if (
           creep.transfer(targetstorage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE
         ) {
