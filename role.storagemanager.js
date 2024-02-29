@@ -8,7 +8,7 @@ var rolestoragemanager = {
       creep.memory.task = "storing";
     }
 
-    if (creep.store.getUsedCapacity() < 50) {
+    if (creep.store.getUsedCapacity() < 20) {
       creep.memory.task = "withdrawing";
 
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
