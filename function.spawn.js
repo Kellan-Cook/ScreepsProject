@@ -19,21 +19,9 @@ var functionSpawn = {
     }
 
     if (spawner.spawning == null) {
-      //console.log('creep count at build: ' + creepcount)
 
-      if (hostile.length > 0) {
-        var newName = "rangedefender" + Game.time;
-        if (spawnEng >= 450 && spawner.spawning == null) {
-          console.log("Spawning new upgrader: " + newName);
-          spawner.spawnCreep(
-            [RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE],
-            newName,
-            {
-              memory: { role: "rangedefender", homespawner: spawner.name },
-            }
-          );
-        }
-      }
+
+
 
       var roomcreepsharvester = spawner.room.find(FIND_MY_CREEPS, {
         filter: (x) => {
@@ -74,9 +62,31 @@ var functionSpawn = {
           );
         },
       });
+      var roomcreepsrangedefender = spawner.room.find(FIND_MY_CREEPS, {
+        filter: (x) => {
+          return (
+            x.memory.homespawner == spawner.name &&
+            x.memory.role == "rangedefender"
+          );
+        },
+      });
 
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
+
+      if (hostile.length >= roomcreepsrangedefender) {
+        var newName = "rangedefender" + Game.time;
+        if (spawnEng >= 450 && spawner.spawning == null) {
+          console.log("Spawning new upgrader: " + newName);
+          spawner.spawnCreep(
+            [RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE],
+            newName,
+            {
+              memory: { role: "rangedefender", homespawner: spawner.name },
+            }
+          );
+        }
+      }
 
       if (roomcreepsharvester.length < sources.length) {
         var goodtarget = spawner.memory.roomsources;
