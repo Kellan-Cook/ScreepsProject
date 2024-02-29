@@ -17,19 +17,19 @@ var roleUpgrader = {
         creep.moveTo(creep.room.controller);
       }
     } else {
-      var target = creep.room.find(FIND_STRUCTURES, {
+      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_CONTAINER ||
               structure.structureType == STRUCTURE_STORAGE) &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 1
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
 
       if (target != null) {
-        if (creep.harvest(target) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(target);
+        if (creep.withdraw(target) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target, { range: 1 });
         } else {
           var sources = creep.room.find(FIND_SOURCES);
           if (creep.harvest(sources[1]) == ERR_NOT_IN_RANGE) {
