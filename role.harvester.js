@@ -29,7 +29,6 @@ var roleHarvester = {
       });
 
       if (targets == null) {
-        //console.log("test");
         targets = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
