@@ -21,6 +21,7 @@ var rolestoragemanager = {
         },
       });
 
+      creep.memory.currentmove = closest.id;
     }
     if (creep.memory.task == "withdrawing") {
       if (creep.memory.currentmove != null) {
@@ -34,6 +35,7 @@ var rolestoragemanager = {
     }
 
     if ((creep.memory.task = "storing")) {
+
 
       var targetstorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
