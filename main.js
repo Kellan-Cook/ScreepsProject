@@ -62,9 +62,9 @@ module.exports.loop = function () {
     console.log("repairer: " + repairer.length);
   }
 
-  //manages how the spawners interact with the room
+ 
 
-  //Game.spawns.forEach()
+  //gives task baseed on memory roll or struture type
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
