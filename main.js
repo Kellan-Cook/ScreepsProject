@@ -4,6 +4,7 @@ var roleBuilder = require("role.builder");
 var roleRepair = require("role.repair");
 var functionSpawn = require("function.spawn");
 var roleRangeDefender = require("role.rangedefender");
+var rolestoragemanager = require("role.storagemanager");
 //var roomBuilder = require('roomBuilder');
 
 module.exports.loop = function () {
@@ -74,5 +75,9 @@ module.exports.loop = function () {
     if (creep.memory.role == "repairer") {
       roleRepair.run(creep);
     }
+    if (creep.memory.role == "storagemanager") {
+        rolestoragemanager.run(creep);
+      }
+    
   }
 };

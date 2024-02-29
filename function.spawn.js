@@ -66,6 +66,13 @@ var functionSpawn = {
           );
         },
       });
+      var roomcreepstoragemanager = spawner.room.find(FIND_MY_CREEPS, {
+        filter: (x) => {
+          return (
+            x.memory.homespawner == spawner.name && x.memory.role == "storagemanager"
+          );
+        },
+      });
 
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
@@ -183,7 +190,20 @@ var functionSpawn = {
               { memory: { role: "repairer", homespawner: spawner.name } }
             );
           }
+
         }
+        if (roomcreepstoragemanager.length < 1) {
+            var newName = "storagemanager" + Game.time;
+            if (spawnEng >= 400 && spawner.spawning == null) {
+              console.log("spawning new storagemanager: " + newName);
+              spawner.spawnCreep(
+                [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
+                newName,
+                { memory: { role: "storagemanager", homespawner: spawner.name} }
+              );
+            }
+          }
+
       }
     }
   },
