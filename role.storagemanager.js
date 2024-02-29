@@ -4,14 +4,11 @@ var rolestoragemanager = {
   //starts the function
   run: function (creep) {
     //sets the task memory state based on used capacity and if changes to withdraw sets the target storage id
-    if (creep.store.getUsedCapacity() > 1) {
+    if (creep.store.getUsedCapacity() == creep.store.getCapacity) {
       creep.memory.task = "storing";
     }
 
-    if (
-      creep.store.getUsedCapacity() == 0 &&
-      creep.memory.task != "withdrawing"
-    ) {
+    if (creep.store.getUsedCapacity() < 50) {
       creep.memory.task = "withdrawing";
 
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {

@@ -13,13 +13,17 @@ module.exports.loop = function () {
   for (var CurSpawn in Game.spawns) {
     functionSpawn.run(CurSpawn);
   }
-  for (var curtower in Game.find(FIND_MY_STRUCTURES, {
+  /*
+  for (var gamestruture in Game.structures){
+    
+    gamestruture.find(FIND_MY_STRUCTURES, {
     filter: (structure) => {
       return structure.structureType == STRUCTURE_TOWER;
     },
-  })) {
+  }) 
     roletower.run(curtower);
   }
+  */
 
   for (var name in Memory.creeps) {
     if (!Game.creeps[name]) {
