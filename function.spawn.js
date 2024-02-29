@@ -13,7 +13,7 @@ var functionSpawn = {
 
     if (hostile.length > 0) {
       Game.notify(
-        "SPWNER: " + spawner.name + "DETECTED HOSTILE" + hostile[0].owner.name
+        "SPWNER: " + spawner.name + "DETECTED HOSTILE" + hostile[0].owner.username
       );
       console.log("HOSTLE DETECTED: " + hostile[0].id);
     }
@@ -216,13 +216,7 @@ var functionSpawn = {
             );
           }
         }
-        console.log(
-          spawner.room.controller.level +
-            " - " +
-            roomcreepsupgrader.length +
-            " - " +
-            spawnEng
-        );
+
         if (
           spawner.spawning == null &&
           spawner.room.controller.level < 8 &&
