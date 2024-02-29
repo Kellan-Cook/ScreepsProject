@@ -21,7 +21,6 @@ var rolestoragemanager = {
         },
       });
 
-      creep.memory.currentmove = closest.id;
     }
     if (creep.memory.task == "withdrawing") {
       if (creep.memory.currentmove != null) {
