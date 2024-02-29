@@ -9,15 +9,18 @@
 
 var rolerepair = {
   run: function (creep) {
+    //if memory is set to true and carrying 0 energy change to harvesting mode
     if (creep.memory.repairing && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.repairing = false;
       creep.say("🔄 harvest");
     }
+    // if memory is set to false and free energy capacity is equal to 0 set memory to repairing
     if (!creep.memory.repairing && creep.store.getFreeCapacity() == 0) {
       creep.memory.repairing = true;
       creep.say("🛠️ repairing");
     }
 
+    //if not repairing find energy to replenish on
     if (!creep.memory.repairing) {
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -36,6 +39,7 @@ var rolerepair = {
       }
     }
 
+    //if memory is repairing find closest struture to repair
     if ((creep.memory.repairing = true)) {
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {

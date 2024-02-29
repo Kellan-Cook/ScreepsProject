@@ -5,12 +5,20 @@ var roleRepair = require("role.repair");
 var functionSpawn = require("function.spawn");
 var roleRangeDefender = require("role.rangedefender");
 var rolestoragemanager = require("role.storagemanager");
+var roletower = require("role.tower");
 //var roomBuilder = require('roomBuilder');
 
 module.exports.loop = function () {
   //runs the spawn specific code / room managment code
   for (var CurSpawn in Game.spawns) {
     functionSpawn.run(CurSpawn);
+  }
+  for (var curtower in Game.find(FIND_MY_STRUCTURES, {
+    filter: (structure) => {
+      return structure.structureType == STRUCTURE_TOWER;
+    },
+  })) {
+    roletower.run(curtower);
   }
 
   for (var name in Memory.creeps) {
@@ -54,9 +62,9 @@ module.exports.loop = function () {
     console.log("repairer: " + repairer.length);
   }
 
-  //manages how the spawners interact with the room
+ 
 
-  //Game.spawns.forEach()
+  //gives task baseed on memory roll or struture type
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
@@ -76,8 +84,7 @@ module.exports.loop = function () {
       roleRepair.run(creep);
     }
     if (creep.memory.role == "storagemanager") {
-        rolestoragemanager.run(creep);
-      }
-    
+      rolestoragemanager.run(creep);
+    }
   }
 };
