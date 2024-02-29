@@ -120,7 +120,7 @@ var functionSpawn = {
           });
         } else if (
           (roomcreepsharvester.length == 0 && spawner.spawning == null) ||
-          (spawnEng < 400 && spawner.spawning == null)
+          (spawnEng < 400 && spawner.spawning == null && spawnEng >= 300)
         ) {
           console.log("Spawning new harvester basic: " + newName);
           spawner.spawnCreep([WORK, WORK, CARRY, MOVE], newName, {
@@ -157,7 +157,7 @@ var functionSpawn = {
           }
         }
 
-        if (roomcreepsbuilder.length < 2) {
+        if (roomcreepsbuilder.length < 2 && spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
           var newName = "builder" + Game.time;
           if (spawnEng == 300 && spawner.spawning == null) {
             console.log("Spawning new builder: " + newName);
