@@ -5,11 +5,11 @@ var rolestoragemanager = {
   run: function (creep) {
     //sets the task memory state based on used capacity and if changes to withdraw sets the target storage id
     if (creep.store.getUsedCapacity() == creep.store.getCapacity) {
-      creep.memory.task = "storing";
+      creep.memory.task = true;
     }
 
-    if (creep.store.getUsedCapacity() < 20) {
-      creep.memory.task = "withdrawing";
+    if (creep.store.getUsedCapacity() == 0) {
+      creep.memory.task = false;
 
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -20,12 +20,13 @@ var rolestoragemanager = {
           );
         },
       });
-
-      creep.memory.currentmove = closest.id;
+      if (closest != null) {
+        creep.memory.currentmove = closest.id;
+      }
     }
 
     //runs the task of moving to and collecting from storage structures
-    if (creep.memory.task == "withdrawing") {
+    if (creep.memory.task == false) {
       if (creep.memory.currentmove != null) {
         var targets = Game.getObjectById(creep.memory.currentmove);
         if (creep.withdraw(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
@@ -35,7 +36,7 @@ var rolestoragemanager = {
     }
 
     //runs the task of moving to epty extensions and filling
-    if ((creep.memory.task = "storing")) {
+    if ((creep.memory.task = true)) {
       var targetstorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
