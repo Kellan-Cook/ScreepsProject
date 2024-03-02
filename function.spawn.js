@@ -212,7 +212,18 @@ var functionSpawn = {
           }
         }
         //if less then 1 store manager spawns 1 with predefined layout
-        if (roomcreepstoragemanager.length < 1) {
+        if (
+          roomcreepstoragemanager.length < 1 &&
+          spawner.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+              return (
+                (structure.structureType == STRUCTURE_EXTENSION &&
+                  structure.structureType == STRUCTURE_CONTAINER) ||
+                structure.structureType == STRUCTURE_STORAGE
+              );
+            },
+          })
+        ) {
           var newName = "storagemanager" + Game.time;
           if (spawnEng >= 400 && spawner.spawning == null) {
             console.log("spawning new storagemanager: " + newName);
@@ -224,6 +235,7 @@ var functionSpawn = {
           }
         }
         //if theire is nothing else to spawn and the room controler is not max level spawns up to 6 upgraders
+        /*
         if (
           spawner.spawning == null &&
           spawner.room.controller.level < 8 &&
@@ -237,24 +249,11 @@ var functionSpawn = {
             bodysize.push(WORK, WORK, CARRY, CARRY, CARRY, MOVE);
             upgraderbodygroup = upgraderbodygroup - 1;
           }
-          spawner.spawnCreep(
-            [
-              WORK,
-              WORK,
-              WORK,
-              WORK,
-              CARRY,
-              CARRY,
-              CARRY,
-              CARRY,
-              CARRY,
-              MOVE,
-              MOVE,
-            ],
-            newName,
-            { memory: { role: "upgrader", homespawner: spawner.name } }
-          );
+          spawner.spawnCreep(bodysize, newName, {
+            memory: { role: "upgrader", homespawner: spawner.name },
+          });
         }
+        */
       }
     }
   },
