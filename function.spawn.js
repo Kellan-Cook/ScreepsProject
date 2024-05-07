@@ -174,7 +174,7 @@ var functionSpawn = {
         }
         //if less then 2 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room
         if (
-          roomcreepsbuilder.length < 2 &&
+          roomcreepsbuilder.length < 3 &&
           spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0
         ) {
           var newName = "builder" + Game.time;
