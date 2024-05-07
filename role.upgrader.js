@@ -27,16 +27,23 @@ var roleUpgrader = {
           },
         });
   
+
         if (target != null) {
                 
           if (creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             creep.moveTo(target);
-          } else {
-            var sources = creep.room.find(FIND_SOURCES);
-            if (creep.harvest(sources[1]) == ERR_NOT_IN_RANGE) {
-              creep.moveTo(sources[1]);
-            }
           }
+        } else {
+
+            var sources = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE)
+            
+            if(creep.harvest(sources) == ERR_NOT_IN_RANGE){
+                creep.moveTo(sources)
+
+
+            }
+
+
         }
       }
     },
