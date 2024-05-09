@@ -174,7 +174,7 @@ var functionSpawn = {
         }
         //if less then 2 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room
         if (
-          roomcreepsbuilder.length < 2 &&
+          roomcreepsbuilder.length < 3 &&
           spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0
         ) {
           var newName = "builder" + Game.time;
@@ -199,10 +199,22 @@ var functionSpawn = {
             );
           }
         }
-        //if less then 2 repairers spawns more based on predefined layout
+        //if less then 2 repairers and storage exists with capacity spawns more based on predefined layout
         if (roomcreepsrepairer.length < 2) {
           var newName = "repairer" + Game.time;
-          if (spawnEng >= 400 && spawner.spawning == null) {
+          if (
+            spawnEng >= 400 &&
+            spawner.spawning == null &&
+            spawner.room.find(FIND_STRUCTURES, {
+              filter: (structure) => {
+                return (
+                  structure.structureType == STRUCTURE_CONTAINER ||
+                  (structure.structureType == STRUCTURE_STORAGE &&
+                    structure.store.getFreeCapacity(RESOURCE_ENERGY) != 0)
+                );
+              },
+            }).length >= 1
+          ) {
             console.log("spawning new repairer: " + newName);
             spawner.spawnCreep(
               [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
