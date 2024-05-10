@@ -5,7 +5,7 @@ var roleRepair = require("role.repair");
 var functionSpawn = require("function.spawn");
 var roleRangeDefender = require("role.rangedefender");
 var rolestoragemanager = require("role.storagemanager");
-var roletower = require("role.tower");
+
 //var roomBuilder = require('roomBuilder');
 
 module.exports.loop = function () {
