@@ -13,6 +13,7 @@ module.exports.loop = function () {
   for (var CurSpawn in Game.spawns) {
     functionSpawn.run(CurSpawn);
   }
+
   /*
   for (var gamestruture in Game.structures){
     

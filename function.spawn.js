@@ -13,6 +13,20 @@ var functionSpawn = {
     //checks for hostile creeps to cause an alert and start spawning of defenders
     var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
 
+    //runs the code for all towers in room for given spawner
+
+    var towers = spawner.room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+
+
+    for (tower in towers){
+      roletower.run(curtower);
+    }
+
+
+
+
+
+
     if (hostile.length > 0) {
       Game.notify(
         "SPWNER: " +
@@ -172,7 +186,7 @@ var functionSpawn = {
             );
           }
         }
-        //if less then 2 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room
+        //if less then 3 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room
         if (
           roomcreepsbuilder.length < 3 &&
           spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0
