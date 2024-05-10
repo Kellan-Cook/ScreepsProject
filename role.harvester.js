@@ -17,6 +17,10 @@ var roleHarvester = {
         creep.moveTo(targetsource);
       }
     } else {
+
+      var extension = creep.pos.findClosestByRange(STRUCTURE_EXTENSION);
+      creep.pos.getRangeTo(extension)
+
       var targets = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
         filter: (structure) => {
           return (

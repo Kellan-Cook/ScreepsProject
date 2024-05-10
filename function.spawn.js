@@ -1,3 +1,4 @@
+var roletower = require("role.tower");
 var functionSpawn = {
   run: function (curspawner) {
     var spawner = Game.spawns[curspawner];
@@ -18,9 +19,12 @@ var functionSpawn = {
     var towers = spawner.room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
 
 
-    for (tower in towers){
-      roletower.run(curtower);
-    }
+    //for (tower in towers){
+
+      //if(tower != null && tower !== undefined){
+        //roletower.run(tower);
+      //}
+    //}
 
 
 
@@ -29,9 +33,9 @@ var functionSpawn = {
 
     if (hostile.length > 0) {
       Game.notify(
-        "SPWNER: " +
+        "SPAWNER: " +
           spawner.name +
-          "DETECTED HOSTILE" +
+          " DETECTED HOSTILE" +
           hostile[0].owner.username
       );
       console.log("HOSTLE DETECTED: " + hostile[0].id);

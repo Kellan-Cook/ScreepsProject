@@ -4,10 +4,10 @@ var roletower = {
 
 
 
-    var tower = Game.structures(curtower);
+    var tower = Game.getObjectById(curtower.id);
 
 
-      var target = tower.pos.findClosestByrange(FIND_HOSTILE_CREEPS);
+      var target = curtower.pos.findClosestByrange(FIND_HOSTILE_CREEPS);
   
       if (target != null) {
         if (tower.attack(target) == ERR_NOT_IN_RANGE) {
