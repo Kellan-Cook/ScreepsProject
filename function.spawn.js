@@ -7,6 +7,7 @@ var functionSpawn = {
     //checks if the spawner was just created
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
+      Memory.myrooms.push(spawner.room.name);
 
       spawner.memory.firstrun = false;
     }
@@ -265,12 +266,12 @@ var functionSpawn = {
           }
         }
         //if theire is nothing else to spawn and the room controler is not max level spawns up to 6 upgraders
-        /*
+        
         if (
           spawner.spawning == null &&
           spawner.room.controller.level < 8 &&
           roomcreepsupgrader.length < 6 &&
-          spawnEng >= 1000
+          spawnEng >= 600
         ) {
           var newName = "upgrader" + Game.time;
           var upgraderbodygroup = Math.floor(spawnEng / 600);
@@ -283,7 +284,7 @@ var functionSpawn = {
             memory: { role: "upgrader", homespawner: spawner.name },
           });
         }
-        */
+        
       }
     }
   },
