@@ -194,7 +194,7 @@ var functionSpawn = {
         if (
           roomcreepsbuilder.length < 3 &&
           spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0 &&
-          spawner.room.find(FIND_MY_STRUCTURESFIND_STRUCTURES, {
+          spawner.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
               return (
                 (structure.structureType == STRUCTURE_CONTAINER ||
