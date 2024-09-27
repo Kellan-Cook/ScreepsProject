@@ -11,7 +11,6 @@ var functionSpawn = {
 
       spawner.memory.firstrun = false;
     }
-
     //checks for hostile creeps to cause an alert and start spawning of defenders
     var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
 
@@ -191,10 +190,20 @@ var functionSpawn = {
             );
           }
         }
-        //if less then 3 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room
+        //if less then 3 builders spawns more based on predefined layouts ONLY if theire is currently somthing to build in the room and only 1 if theire is no storage
         if (
           roomcreepsbuilder.length < 3 &&
-          spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0
+          spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0 &&
+          spawner.room.find(FIND_MY_STRUCTURESFIND_STRUCTURES, {
+            filter: (structure) => {
+              return (
+                (structure.structureType == STRUCTURE_CONTAINER ||
+                  structure.structureType == STRUCTURE_STORAGE) &&
+                structure.store(RESOURCE_ENERGY) > 100
+              );
+            },
+          } ) ||
+          roomcreepsbuilder < 1
         ) {
           var newName = "builder" + Game.time;
           if (spawnEng == 300 && spawner.spawning == null) {
