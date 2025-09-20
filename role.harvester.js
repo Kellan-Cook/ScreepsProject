@@ -1,15 +1,24 @@
+/**
+ * @file This module contains the logic for the harvester creep role.
+ * @author YOUR_NAME
+ * @version 1.0
+ */
+
 var roleHarvester = {
-  /** @param {Creep} creep **/
+  /**
+   * This function is the main entry point for the harvester creep logic. It is called for each harvester creep in the game.
+   * @param {Creep} creep - The creep to run the logic for.
+   */
   run: function (creep) {
-    //if creep full set memory to storing
+    // If the creep is full, it should switch to storing.
     if (creep.store.getUsedCapacity() == creep.store.getCapacity()) {
       creep.memory.task = "storing";
     }
-    //if creep is empty set memory to harvesting
+    // If the creep is empty, it should switch to harvesting.
     if (creep.store.getUsedCapacity() == 0) {
       creep.memory.task = "harvesting";
     }
-    //if memory is harvesting harvest else find storage
+    // If the creep is harvesting, it should move to the source and harvest it.
     if (creep.memory.task == "harvesting") {
       var targetsource = Game.getObjectById(creep.memory.roomsources);
 
@@ -21,6 +30,7 @@ var roleHarvester = {
       var extension = creep.pos.findClosestByRange(STRUCTURE_EXTENSION);
       creep.pos.getRangeTo(extension)
 
+      // Finds the closest extension or spawn with free capacity.
       var targets = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
         filter: (structure) => {
           return (
@@ -30,7 +40,7 @@ var roleHarvester = {
           );
         },
       });
-      //if all extensions and spawns are full of energy deposit to storage
+      // If all extensions and spawns are full, it deposits to storage.
       if (targets == null) {
         targets = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
@@ -43,6 +53,7 @@ var roleHarvester = {
         });
       }
 
+      // If a target is found, the creep moves to it and transfers energy.
       if (targets != null) {
         if (creep.transfer(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           creep.moveTo(targets);

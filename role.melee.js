@@ -1,49 +1,32 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('role.melee');
- * mod.thing == 'a thing'; // true
- * 
- * 
- * attack creeps will have memory items:
- *  group = identifies wich group of creeps it is a part of
- *  leader = identifies wich creep in group is the leader = responsible for most calculation 
- *  path = stores relevent paths for movement from leader or spawners
- *  target = current target
- *  
- * 
- * 
- * 
- * 
+/**
+ * @file This module contains the logic for the melee creep role.
+ * @author YOUR_NAME
+ * @version 1.0
  */
 
-
-
-
-
-
-
-    
 var rolemelee = {
 
 
-    /** @param {Creep} creep **/
+    /**
+     * This function is the main entry point for the melee creep logic. It is called for each melee creep in the game.
+     * @param {Creep} creep - The creep to run the logic for.
+     */
     run: function(creep){
 
-        if(creep.memory.leader = True){
+        // The melee creep logic is not yet implemented.
+        // The intended functionality is for the melee creep to attack hostile creeps.
+        // The creep should move to the target and attack it.
+        // The creep should also be able to work in groups with other melee creeps.
 
-
-
-        }else {
-            
-
-
-
-
+        // Example of how to find and attack a hostile creep:
+        /*
+        var target = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+        if(target) {
+            if(creep.attack(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            }
         }
-
+        */
 
 
 

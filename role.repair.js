@@ -1,26 +1,27 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('role.repair');
- * mod.thing == 'a thing'; // true
+/**
+ * @file This module contains the logic for the repairer creep role.
+ * @author YOUR_NAME
+ * @version 1.0
  */
 
 var rolerepair = {
+  /**
+   * This function is the main entry point for the repairer creep logic. It is called for each repairer creep in the game.
+   * @param {Creep} creep - The creep to run the logic for.
+   */
   run: function (creep) {
-    //if memory is set to true and carrying 0 energy change to harvesting mode
+    // If the creep is repairing and has no energy, it should switch to harvesting.
     if (creep.memory.repairing && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.repairing = false;
       creep.say("🔄 harvest");
     }
-    // if memory is set to false and free energy capacity is equal to 0 set memory to repairing
+    // If the creep is not repairing and has a full energy capacity, it should switch to repairing.
     if (!creep.memory.repairing && creep.store.getFreeCapacity() == 0) {
       creep.memory.repairing = true;
       creep.say("🛠️ repairing");
     }
 
-    //if not repairing find energy to replenish on
+    // If the creep is not repairing, it should find an energy source and harvest from it.
     if (!creep.memory.repairing) {
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -39,8 +40,8 @@ var rolerepair = {
       }
     }
 
-    //if memory is repairing find closest struture to repair
-    if ((creep.memory.repairing = true)) {
+    // If the creep is repairing, it should find a structure to repair.
+    if (creep.memory.repairing) {
       var target = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (

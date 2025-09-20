@@ -1,16 +1,27 @@
+/**
+ * @file This module contains the logic for the storage manager creep role.
+ * @author YOUR_NAME
+ * @version 1.0
+ */
+
 var rolestoragemanager = {
-  /** @param {Creep} creep **/
+  /**
+   * This function is the main entry point for the storage manager creep logic. It is called for each storage manager creep in the game.
+   * @param {Creep} creep - The creep to run the logic for.
+   */
 
   //starts the function
   run: function (creep) {
-    //sets the task memory state based on used capacity and if changes to withdraw sets the target storage id
+    // If the creep has more than 1 energy, it should switch to transferring.
     if (creep.store.getUsedCapacity() > 1) {
       creep.memory.task = true;
     }
 
+    // If the creep has no energy, it should switch to withdrawing.
     if (creep.store.getUsedCapacity() == 0) {
       creep.memory.task = false;
 
+      // Finds the closest container or storage with energy.
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
@@ -25,6 +36,7 @@ var rolestoragemanager = {
       }
     }
 
+    // If the creep is transferring, it should find the closest spawn or extension with free capacity.
     if(creep.memory.task == true){
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -42,7 +54,7 @@ var rolestoragemanager = {
 
 
     }
-    //runs the task of moving to and collecting from storage structures
+    // If the creep is withdrawing, it should move to the target and withdraw energy.
     if (creep.memory.task == false) {
       if (creep.memory.currentmove != null) {
         var targets = Game.getObjectById(creep.memory.currentmove);
@@ -52,7 +64,7 @@ var rolestoragemanager = {
       }
     }
 
-    //runs the task of moving to epty extensions and filling
+    // If the creep is transferring, it should move to the target and transfer energy.
     if (creep.memory.task == true) {
       var targets = Game.getObjectById(creep.memory.currentmove);
       if(creep.memory.currentmove.getFreeCapacity < 1){

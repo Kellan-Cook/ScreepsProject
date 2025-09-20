@@ -1,3 +1,9 @@
+/**
+ * @file This is the main entry point for the Screeps AI.
+ * @author YOUR_NAME
+ * @version 1.0
+ */
+
 var roleHarvester = require("role.harvester");
 var roleUpgrader = require("role.upgrader");
 var roleBuilder = require("role.builder");
@@ -8,11 +14,15 @@ var rolestoragemanager = require("role.storagemanager");
 
 //var roomBuilder = require('roomBuilder');
 
+/**
+ * This is the main game loop. It is called every tick.
+ */
 module.exports.loop = function () {
+  // Initializes the memory for the rooms if it is not already initialized.
   if(Memory.myrooms == undefined){
     Memory.myrooms = [];
   }
-  //runs the spawn specific code / room managment code
+  // Runs the spawn logic for each spawner in the game.
   for (var CurSpawn in Game.spawns) {
     functionSpawn.run(CurSpawn);
   }
@@ -29,13 +39,14 @@ module.exports.loop = function () {
   }
   */
 
+  // Clears the memory of creeps that are no longer in the game.
   for (var name in Memory.creeps) {
     if (!Game.creeps[name]) {
       delete Memory.creeps[name];
       console.log("Clearing non-existing creep memory:", name);
     }
   }
-  // creep number counting and log
+  // Counts the number of creeps of each role.
 
   var harvesterNumber = _.filter(
     Game.creeps,
@@ -58,7 +69,7 @@ module.exports.loop = function () {
     (creep) => creep.memory.role == "repairer"
   );
 
-  //log set to display every 10 ticks
+  // Logs the number of creeps of each role to the console every 10 ticks.
   var tentick = String(Game.time);
   tentick = tentick.slice(-1);
   if (tentick == "0") {
@@ -72,7 +83,7 @@ module.exports.loop = function () {
 
  
 
-  //gives task baseed on memory roll or struture type
+  // Runs the logic for each creep based on its role.
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
