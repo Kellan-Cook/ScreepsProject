@@ -97,7 +97,7 @@ var functionSpawn = {
       if (hostile.length >= roomcreepsrangedefender) {
         var newName = "rangedefender" + Game.time;
         if (spawnEng >= 450 && spawner.spawning == null) {
-          console.log("Spawning new upgrader: " + newName);
+          console.log("Spawning new defender: " + newName);
           spawner.spawnCreep(
             [RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE, MOVE],
             newName,
