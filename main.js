@@ -9,6 +9,9 @@ var rolestoragemanager = require("role.storagemanager");
 //var roomBuilder = require('roomBuilder');
 
 module.exports.loop = function () {
+  if(Memory.myrooms == undefined){
+    Memory.myrooms = [];
+  }
   //runs the spawn specific code / room managment code
   for (var CurSpawn in Game.spawns) {
     functionSpawn.run(CurSpawn);

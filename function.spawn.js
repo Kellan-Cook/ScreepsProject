@@ -108,7 +108,7 @@ var functionSpawn = {
         }
       }
       //spawns harvesters if theire are less harvesters then sources to harvest
-      if (roomcreepsharvester.length < sources.length) {
+      if (roomcreepsharvester.length < sources.length && spawnEng > 299) {
         var goodtarget = spawner.memory.roomsources;
         var optimaltarget = spawner.memory.roomsources;
         roomcreepsharvester.forEach(function (arrayItem) {
@@ -199,7 +199,7 @@ var functionSpawn = {
               return (
                 (structure.structureType == STRUCTURE_CONTAINER ||
                   structure.structureType == STRUCTURE_STORAGE) &&
-                structure.store(RESOURCE_ENERGY) > 100
+                structure.store[RESOURCE_ENERGY] > 100
               );
             },
           } ) ||
@@ -238,7 +238,7 @@ var functionSpawn = {
                 return (
                   structure.structureType == STRUCTURE_CONTAINER ||
                   (structure.structureType == STRUCTURE_STORAGE &&
-                    structure.store.getFreeCapacity(RESOURCE_ENERGY) != 0)
+                    structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
                 );
               },
             }).length >= 1
