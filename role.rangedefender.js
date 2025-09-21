@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the ranged defender creep role.
- * @author YOUR_NAME
- * @version 1.0
+ * @author Kellan Cook
+ * @version 0.2
  */
 
 var rolerangedefender = {

@@ -1,7 +1,7 @@
 /**
  * @file This module contains functions for creep movement.
- * @author YOUR_NAME
- * @version 1.0
+ * @author Kellan Cook
+ * @version 0.2
  */
 
 /**

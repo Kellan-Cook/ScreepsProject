@@ -1,7 +1,7 @@
 /**
  * @file This module is intended to contain logic for dynamically building creeps based on the room's needs.
- * @author YOUR_NAME
- * @version 1.0
+ * @author Kellan Cook
+ * @version 0.2
  */
 
 var roomBuilder = {

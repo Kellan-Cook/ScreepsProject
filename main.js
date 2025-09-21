@@ -1,7 +1,7 @@
 /**
  * @file This is the main entry point for the Screeps AI.
- * @author YOUR_NAME
- * @version 1.0
+ * @author Kellan Cook
+ * @version 0.2
  */
 
 var roleHarvester = require("role.harvester");
