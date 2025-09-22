@@ -37,7 +37,7 @@ var rolestoragemanager = {
     }
 
     // If the creep is transferring, it should find the closest spawn or extension with free capacity.
-    if(creep.memory.task == true){
+    if (creep.memory.task == true) {
       var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
@@ -47,19 +47,27 @@ var rolestoragemanager = {
           );
         },
       });
-      if(closest != null){
+      if (closest != null) {
         creep.memory.currentmove = closest.id;
-
       }
-
-
     }
     // If the creep is withdrawing, it should move to the target and withdraw energy.
     if (creep.memory.task == false) {
       if (creep.memory.currentmove != null) {
         var targets = Game.getObjectById(creep.memory.currentmove);
-        if (creep.withdraw(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets);
+        var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              (structure.structureType == STRUCTURE_SPAWN ||
+                structure.structureType == STRUCTURE_EXTENSION) &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+        if (targets > 0) {
+          if (creep.withdraw(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(targets);
+          }
         }
       }
     }
@@ -67,14 +75,12 @@ var rolestoragemanager = {
     // If the creep is transferring, it should move to the target and transfer energy.
     if (creep.memory.task == true) {
       var targets = Game.getObjectById(creep.memory.currentmove);
-      if(creep.memory.currentmove.getFreeCapacity < 1){
+      if (creep.memory.currentmove.getFreeCapacity < 1) {
         creep.memory.task = false;
       }
-        if (
-          creep.transfer(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE
-        ) {
-          creep.moveTo(targets);
-        }
+      if (creep.transfer(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(targets);
+      }
     }
   },
 };
