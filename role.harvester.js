@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the harvester creep role.
  * @author Kellan Cook
- * @version 0.3
+ * @version 0.9
  */
 
 var roleHarvester = {
@@ -10,9 +10,41 @@ var roleHarvester = {
    * @param {Creep} creep - The creep to run the logic for.
    */
   run: function (creep) {
-    // If the creep is full, it should switch to storing.
-    if (creep.store.getUsedCapacity() == creep.store.getCapacity()) {
+    // If the creep is full and not already storing, switch to storing and check for containers.
+    if (creep.store.getFreeCapacity() == 0 && creep.memory.task !== "storing") {
       creep.memory.task = "storing";
+
+      var targetsource = Game.getObjectById(creep.memory.roomsources);
+
+      // Check for nearby containers and construction sites.
+      var containers = targetsource.pos.findInRange(FIND_STRUCTURES, 3, {
+        filter: { structureType: STRUCTURE_CONTAINER },
+      });
+      var constructionSites = targetsource.pos.findInRange(
+        FIND_CONSTRUCTION_SITES,
+        3,
+        {
+          filter: { structureType: STRUCTURE_CONTAINER },
+        }
+      );
+
+      // If no containers or construction sites are found, create a new construction site.
+      if (containers.length === 0 && constructionSites.length === 0) {
+        let positions = [];
+        for (let x = targetsource.pos.x - 2; x <= targetsource.pos.x + 2; x++) {
+            for (let y = targetsource.pos.y - 2; y <= targetsource.pos.y + 2; y++) {
+                if (creep.room.getTerrain().get(x, y) !== TERRAIN_MASK_WALL && targetsource.pos.getRangeTo(x, y) > 1) {
+                    positions.push(new RoomPosition(x, y, creep.room.name));
+                }
+            }
+        }
+        
+        // Select a random position from the valid positions.
+        if (positions.length > 0) {
+            let pos = positions[Math.floor(Math.random() * positions.length)];
+            creep.room.createConstructionSite(pos, STRUCTURE_CONTAINER);
+        }
+      }
     }
     // If the creep is empty, it should switch to harvesting.
     if (creep.store.getUsedCapacity() == 0) {
@@ -25,26 +57,6 @@ var roleHarvester = {
 
       if (creep.harvest(targetsource) == ERR_NOT_IN_RANGE) {
         creep.moveTo(targetsource);
-      }
-
-      // Check for nearby containers and create a construction site if none are found.
-      var containers = targetsource.pos.findInRange(FIND_STRUCTURES, 3, {
-        filter: { structureType: STRUCTURE_CONTAINER },
-      });
-
-      if (containers.length === 0) {
-        // Find a suitable position for the container blueprint.
-        var pathToSource = creep.room.findPath(creep.pos, targetsource.pos, {
-          ignoreCreeps: true,
-        });
-        if (pathToSource.length > 0) {
-          var containerPos = new RoomPosition(
-            pathToSource[0].x,
-            pathToSource[0].y,
-            creep.room.name
-          );
-          creep.room.createConstructionSite(containerPos, STRUCTURE_CONTAINER);
-        }
       }
     } else {
       // When storing, find the closest container, storage, extension, or spawn with free capacity.
