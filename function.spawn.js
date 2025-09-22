@@ -100,7 +100,7 @@ var functionSpawn = {
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
       // Spawns defenders as needed.
-      if (hostile.length >= roomcreepsrangedefender) {
+      if (hostile.length > roomcreepsrangedefender) {
         var newName = "rangedefender" + Game.time;
         if (spawnEng >= 450 && spawner.spawning == null) {
           console.log("Spawning new defender: " + newName);
