@@ -4,6 +4,7 @@
  * @version 0.2
  */
 
+const { isInteger } = require("lodash");
 var roletower = require("role.tower");
 var functionSpawn = {
   /**
@@ -137,12 +138,13 @@ var functionSpawn = {
         // Sets the name of the harvester based on a combination of their role and game time.
         var newName = "harvester" + Game.time;
 
-        var harvesterbodygroup = Math.floor(spawnEng / 400);
+        var harvesterbodygroup = Math.floor((spawnEng - 100) / 100);
         var bodysize = [];
+        bodysize.push(CARRY, MOVE)
         // Dynamically creates harvesters based on predefined blocks based on the amount of resources.
-        if (spawnEng >= 400 && spawner.spawning == null) {
+        if (spawnEng >= 200 && spawner.spawning == null) {
           while (harvesterbodygroup > 0) {
-            bodysize.push(WORK, WORK, CARRY, CARRY, CARRY, MOVE);
+            bodysize.push(WORK);
             harvesterbodygroup = harvesterbodygroup - 1;
           }
           // Spawns the dynamic harvester.
