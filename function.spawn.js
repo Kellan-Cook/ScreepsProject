@@ -258,7 +258,7 @@ var functionSpawn = {
         }
         // If less then 1 store manager, spawns 1 with predefined layout.
         if (
-          roomcreepstoragemanager.length < 1 &&
+          roomcreepstoragemanager.length < sources.length + 1 &&
           spawner.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
               return (
