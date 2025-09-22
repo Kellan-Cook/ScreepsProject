@@ -13,7 +13,6 @@ var functionSpawn = {
   run: function (curspawner) {
     var spawner = Game.spawns[curspawner];
     var spawnEng = spawner.room.energyAvailable;
-
     // Checks if the spawner was just created. If so, it initializes the spawner's memory.
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);

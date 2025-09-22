@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the repairer creep role.
  * @author Kellan Cook
- * @version 0.2
+ * @version 0.3
  */
 
 var rolerepair = {
@@ -21,8 +21,26 @@ var rolerepair = {
       creep.say("🛠️ repairing");
     }
 
-    // If the creep is not repairing, it should find an energy source and harvest from it.
-    if (!creep.memory.repairing) {
+    // If the creep is repairing, it should find a structure to repair.
+    if (creep.memory.repairing) {
+      var targets = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) => {
+          return (
+            structure.hits < structure.hitsMax &&
+            structure.hits < 2000000 &&
+            structure.structureType != STRUCTURE_WALL
+          );
+        },
+      });
+      targets.sort((a, b) => a.hits - b.hits);
+
+      if (targets.length > 0) {
+        if (creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(targets[0]);
+        }
+      }
+    } else {
+      // If the creep is not repairing, it should find an energy source and harvest from it.
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
@@ -33,44 +51,10 @@ var rolerepair = {
         },
       });
 
-      if (target != null) {
+      if (target) {
         if (creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           creep.moveTo(target);
         }
-      }
-    }
-
-    // If the creep is repairing, it should find a structure to repair.
-    if (creep.memory.repairing) {
-      var target = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-          return (
-            structure.hits < structure.hitsMax &&
-            structure.hits < 2000000 &&
-            structure.structureType != STRUCTURE_WALL
-          );
-        },
-      });
-      target.sort((a, b) => a.hits - b.hits);
-    }
-
-    if (target[0] != null)
-      if (creep.repair(target[0]) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(target[0]);
-      } else {
-        var target = creep.room.find(FIND_STRUCTURES, {
-          filter: (structure) => {
-            return (
-              structure.hits < structure.hitsMax && structure.hits < 2000000
-            );
-          },
-        });
-        target.sort((a, b) => a.hits - b.hits);
-      }
-
-    if (target[0] != null) {
-      if (creep.repair(target[0]) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(target[0]);
       }
     }
   },
