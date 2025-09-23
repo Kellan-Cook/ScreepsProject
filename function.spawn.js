@@ -6,6 +6,7 @@
 
 const { isInteger } = require("lodash");
 var roletower = require("role.tower");
+var roomBuilder = require("roomBuilder");
 var functionSpawn = {
   /**
    * This function is the main entry point for the spawner logic. It is called for each spawner in the game.
@@ -18,6 +19,8 @@ var functionSpawn = {
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
       Memory.myrooms.push(spawner.room.name);
+      roomBuilder.run(spawner);
+      
 
       spawner.memory.firstrun = false;
     }

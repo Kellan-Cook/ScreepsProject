@@ -14,12 +14,14 @@ var roomBuilder = {
     run: function(spawner){
         
         // first should place the needed roads 
-        for(source of spawner.memory.roomsources){
-            path = spawner.pos.findPathTo(source)
-            for(position in path){
-                spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD)
+        for(const source of spawner.memory.roomsources){
+            const sourceObject = Game.getObjectById(source.id);
+            if (sourceObject) {
+                const path = spawner.pos.findPathTo(sourceObject);
+                for(const position of path){
+                    spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
+                }
             }
-
         }
         
         
