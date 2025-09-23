@@ -13,16 +13,14 @@ var roomBuilder = {
      */
     run: function(spawner){
         
-        // This module is not yet implemented.
-        // The intended functionality is to dynamically build creeps based on the room's needs.
-        // For example, it could build more harvesters if the room is low on energy, or more builders if there are construction sites.
-        
-        // Example of how to get the sources in a room:
-        /*
-        var sources = spawner.room.find(FIND_SOURCES);
-        spawner.memory.Nspawn = sources.length;
-        */
-        
+        // first should place the needed roads 
+        for(source of spawner.memory.roomsources){
+            path = spawner.pos.findPathTo(source)
+            for(position in path){
+                spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD)
+            }
+
+        }
         
         
         
