@@ -20,9 +20,10 @@ var functionSpawn = {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
       Memory.myrooms.push(spawner.room.name);
       roomBuilder.run(spawner);
-      
-
       spawner.memory.firstrun = false;
+    }
+    if (String(Game.time).slice(-3) == "000"){
+      roomBuilder.run(spawner);
     }
     // Checks for hostile creeps in the room. If any are found, it sends a notification and logs a message to the console.
     var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
