@@ -14,11 +14,9 @@ var roleRepair = {
     // State transition: Harvesting <-> Repairing
     if (creep.memory.repairing && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.repairing = false;
-      creep.say("🔄 harvest");
     }
     if (!creep.memory.repairing && creep.store.getFreeCapacity() == 0) {
       creep.memory.repairing = true;
-      creep.say("🚧 repair");
     }
 
     // Execute state

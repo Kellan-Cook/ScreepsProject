@@ -14,14 +14,12 @@ var roleStorageManager = {
     // State transition: Harvesting <-> Transferring
     if (creep.memory.task == "transfering" && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.task = "harvesting";
-      creep.say("harvesting");
     }
     if (
       creep.memory.task == "harvesting" &&
       creep.store.getFreeCapacity() == 0
     ) {
       creep.memory.task = "transfering";
-      creep.say("transfering");
     }
 
     // Execute state
