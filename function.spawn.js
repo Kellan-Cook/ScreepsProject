@@ -1,5 +1,6 @@
 /**
- * @file This module contains the logic for spawning creeps in the Screeps game.
+ * @file function.spawn.js
+ * @description Manages the spawning logic for creeps, including role assignment and body part configuration.
  * @author Kellan Cook
  * @version 0.2
  */
@@ -7,52 +8,58 @@
 const { isInteger } = require("lodash");
 var roletower = require("role.tower");
 var roomBuilder = require("roomBuilder");
+
 var functionSpawn = {
   /**
-   * This function is the main entry point for the spawner logic. It is called for each spawner in the game.
-   * @param {string} curspawner - The name of the spawner to run the logic for.
+   * Main entry point for spawner logic. Executed for each spawner.
+   * @param {string} curspawner - The name of the spawner to run logic for.
    */
   run: function (curspawner) {
     var spawner = Game.spawns[curspawner];
     var spawnEng = spawner.room.energyAvailable;
-    // Checks if the spawner was just created. If so, it initializes the spawner's memory.
+
+    // Initialize spawner memory on first run
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
       Memory.myrooms.push(spawner.room.name);
       roomBuilder.run(spawner);
       spawner.memory.firstrun = false;
     }
-    if (String(Game.time).slice(-3) == "000"){
+
+    // Periodically run room builder (every 1000 ticks)
+    if (String(Game.time).slice(-3) == "000") {
       roomBuilder.run(spawner);
     }
-    // Checks for hostile creeps in the room. If any are found, it sends a notification and logs a message to the console.
+
+    // Check for hostile creeps
     var hostile = spawner.room.find(FIND_HOSTILE_CREEPS);
 
-    // Runs the logic for all towers in the room.
+    // Tower logic (commented out)
     var towers = spawner.room.find(FIND_MY_STRUCTURES, {
       filter: { structureType: STRUCTURE_TOWER },
     });
 
     //for (tower in towers){
 
-      //if(tower != null && tower !== undefined){
-        //roletower.run(tower);
-      //}
+    //if(tower != null && tower !== undefined){
+    //roletower.run(tower);
+    //}
     //}
 
+    // Notify if hostiles detected
     if (hostile.length > 0) {
       Game.notify(
         "SPAWNER: " +
-          spawner.name +
-          " DETECTED HOSTILE" +
-          hostile[0].owner.username
+        spawner.name +
+        " DETECTED HOSTILE" +
+        hostile[0].owner.username
       );
       console.log("HOSTLE DETECTED: " + hostile[0].id);
     }
 
-    // If the spawner is not currently spawning a creep, it runs the logic for spawning new creeps.
+    // Spawning logic (only if not currently spawning)
     if (spawner.spawning == null) {
-      // Finds all creeps owned by the given spawner.
+      // Count existing creeps by role
       var roomcreepsharvester = spawner.room.find(FIND_MY_CREEPS, {
         filter: (x) => {
           return (
@@ -103,7 +110,8 @@ var functionSpawn = {
 
       var sources = spawner.memory.roomsources;
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
-      // Spawns defenders as needed.
+
+      // Spawn defenders if needed
       if (hostile.length > roomcreepsrangedefender) {
         var newName = "rangedefender" + Game.time;
         if (spawnEng >= 450 && spawner.spawning == null) {
@@ -117,14 +125,15 @@ var functionSpawn = {
           );
         }
       }
-      // Spawns harvesters if there are less harvesters then sources to harvest.
+
+      // Spawn harvesters if needed
       if (roomcreepsharvester.length < sources.length && spawnEng > 299) {
         var goodtarget = spawner.memory.roomsources;
         var optimaltarget = spawner.memory.roomsources;
         roomcreepsharvester.forEach(function (arrayItem) {
           goodtarget.forEach(function (goodItem) {
             var obj = arrayItem.memory.roomsources;
-            // Checks which sources need a harvester to set harvester memory state.
+            // Determine which source needs a harvester
             if (goodItem.id == obj) {
               console.log("SLICED: " + goodItem.id);
               console.log("before: " + goodtarget[0].id);
@@ -139,19 +148,19 @@ var functionSpawn = {
             }
           });
         });
-        // Sets the name of the harvester based on a combination of their role and game time.
+
         var newName = "harvester" + Game.time;
 
         var harvesterbodygroup = Math.floor((spawnEng - 100) / 100);
         var bodysize = [];
         bodysize.push(CARRY, MOVE)
-        // Dynamically creates harvesters based on predefined blocks based on the amount of resources.
+
+        // Dynamic harvester body based on energy
         if (spawnEng >= 200 && spawner.spawning == null) {
           while (harvesterbodygroup > 0) {
             bodysize.push(WORK);
             harvesterbodygroup = harvesterbodygroup - 1;
           }
-          // Spawns the dynamic harvester.
           console.log("Spawning new harvester 1: " + newName);
           spawner.spawnCreep(bodysize, newName, {
             memory: {
@@ -162,7 +171,7 @@ var functionSpawn = {
             },
           });
         } else if (
-          // If not enough resources for larger harvesters, spawn a predefined basic harvester.
+          // Fallback to basic harvester if low energy or no harvesters
           (roomcreepsharvester.length == 0 && spawner.spawning == null) ||
           (spawnEng < 400 && spawner.spawning == null && spawnEng >= 300)
         ) {
@@ -177,7 +186,7 @@ var functionSpawn = {
           });
         }
       } else {
-        // If less then 2 upgraders, spawns more based on predefined layouts.
+        // Spawn upgraders
         if (roomcreepsupgrader.length < 2) {
           var newName = "upgrader" + Game.time;
           if (spawnEng == 300 && spawner.spawning == null) {
@@ -201,7 +210,7 @@ var functionSpawn = {
             );
           }
         }
-        // If less then 3 builders, spawns more based on predefined layouts ONLY if there is currently something to build in the room and only 1 if there is no storage.
+        // Spawn builders
         if (
           roomcreepsbuilder.length < 3 &&
           spawner.room.find(FIND_CONSTRUCTION_SITES).length > 0 &&
@@ -238,7 +247,7 @@ var functionSpawn = {
             );
           }
         }
-        // If less then 2 repairers and storage exists with capacity, spawns more based on predefined layout.
+        // Spawn repairers
         if (roomcreepsrepairer.length < 2) {
           var newName = "repairer" + Game.time;
           if (
@@ -262,7 +271,7 @@ var functionSpawn = {
             );
           }
         }
-        // If less then 1 store manager, spawns 1 with predefined layout.
+        // Spawn storage managers
         if (
           roomcreepstoragemanager.length < sources.length + 1 &&
           spawner.room.find(FIND_STRUCTURES, {
@@ -285,7 +294,7 @@ var functionSpawn = {
             );
           }
         }
-        // If there is nothing else to spawn and the room controller is not max level, spawns up to 6 upgraders.
+        // Spawn extra upgraders if room is stable
         if (
           spawner.spawning == null &&
           spawner.room.controller.level < 8 &&

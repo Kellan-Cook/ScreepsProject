@@ -1,42 +1,32 @@
 /**
- * @file This module contains the logic for the melee creep role.
+ * @file role.melee.js
+ * @description Defines the behavior for the melee defender role, which attacks hostile creeps.
  * @author Kellan Cook
  * @version 0.2
  */
 
-var rolemelee = {
-
-
+var roleMelee = {
     /**
-     * This function is the main entry point for the melee creep logic. It is called for each melee creep in the game.
+     * Main logic for the melee defender role.
      * @param {Creep} creep - The creep to run the logic for.
      */
-    run: function(creep){
+    run: function (creep) {
+        // Find hostile creeps
+        var targets = creep.room.find(FIND_HOSTILE_CREEPS);
 
-        // The melee creep logic is not yet implemented.
-        // The intended functionality is for the melee creep to attack hostile creeps.
-        // The creep should move to the target and attack it.
-        // The creep should also be able to work in groups with other melee creeps.
-
-        // Example of how to find and attack a hostile creep:
-        /*
-        var target = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
-        if(target) {
-            if(creep.attack(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
+        if (targets.length > 0) {
+            // Attack closest hostile
+            if (creep.attack(targets[0]) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(targets[0]);
+            }
+        } else {
+            // Patrol to spawn if no hostiles
+            var spawn = Game.spawns[creep.memory.homespawner];
+            if (spawn) {
+                creep.moveTo(spawn);
             }
         }
-        */
+    },
+};
 
-
-
-    }
-
-
-
-}
-
-
-
-
-module.exports = rolemelee;
+module.exports = roleMelee;

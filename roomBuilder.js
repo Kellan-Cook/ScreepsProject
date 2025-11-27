@@ -1,42 +1,61 @@
 /**
- * @file This module is intended to contain logic for dynamically building creeps based on the room's needs.
+ * @file roomBuilder.js
+ * @description Contains logic for dynamically building room infrastructure (roads, containers) based on room needs.
  * @author Kellan Cook
  * @version 0.2
  */
 
 var roomBuilder = {
 
-
     /**
-     * This function is the main entry point for the room builder logic. It is called for each spawner in the game.
+     * Main entry point for room builder logic. Executed for each spawner.
      * @param {StructureSpawn} spawner - The spawner to run the logic for.
      */
     run: function (spawner) {
 
-        // first should place the needed roads 
+        // Place roads to sources
         for (const source of spawner.memory.roomsources) {
             const sourceObject = Game.getObjectById(source.id);
             if (sourceObject) {
-                const path = spawner.pos.findPathTo(sourceObject);
+                const path = spawner.pos.findPathTo(sourceObject, { ignoreCreeps: true });
                 for (const position of path) {
-                    spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
+                    const pos = new RoomPosition(position.x, position.y, spawner.room.name);
+                    const structures = pos.lookFor(LOOK_STRUCTURES);
+                    const sites = pos.lookFor(LOOK_CONSTRUCTION_SITES);
+
+                    const hasRoad = structures.some(s => s.structureType === STRUCTURE_ROAD) ||
+                        sites.some(s => s.structureType === STRUCTURE_ROAD);
+
+                    if (!hasRoad) {
+                        spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
+                    }
                 }
             }
         }
-
-
 
         this.createSourceContainers(spawner);
     },
 
     /**
-     * Places a container as close as possible to each source, next to a road.
+     * Places a container as close as possible to each source, prioritizing spots next to roads.
+     * Scans a range of 2 around the source, avoids placing on roads, and picks the closest valid spot.
      * @param {StructureSpawn} spawner - The spawner to run the logic for.
      */
     createSourceContainers: function (spawner) {
         for (const source of spawner.memory.roomsources) {
             const sourceObject = Game.getObjectById(source.id);
             if (!sourceObject) continue;
+
+            // Check if a container already exists within range 2
+            const existingContainers = sourceObject.pos.findInRange(FIND_STRUCTURES, 2, {
+                filter: { structureType: STRUCTURE_CONTAINER }
+            });
+
+            const existingSites = sourceObject.pos.findInRange(FIND_CONSTRUCTION_SITES, 2, {
+                filter: { structureType: STRUCTURE_CONTAINER }
+            });
+
+            if (existingContainers.length > 0 || existingSites.length > 0) continue;
 
             // 1. Identify all valid positions within Range 2 of the source
             let validPositions = [];

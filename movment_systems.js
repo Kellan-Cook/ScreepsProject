@@ -1,5 +1,6 @@
 /**
- * @file This module contains functions for creep movement.
+ * @file movment_systems.js
+ * @description Contains utility functions for creep movement and pathfinding.
  * @author Kellan Cook
  * @version 0.2
  */
@@ -10,14 +11,12 @@
  * @param {RoomObject} target - The target to move to.
  * @param {number} wantedRange - The desired range to the target.
  */
-function basicmovment(creep, target, wantedRange){
-
-    if(creep.pos.getRangeTo(target) > wantedRange){
-
-        creep.moveTo(target)
+function basicmovment(creep, target, wantedRange) {
+    if (creep.pos.getRangeTo(target) > wantedRange) {
+        creep.moveTo(target);
     }
-
-
-
-
 }
+
+module.exports = {
+    basicmovment: basicmovment
+};

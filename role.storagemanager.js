@@ -1,92 +1,69 @@
 /**
- * @file This module contains the logic for the storage manager creep role.
+ * @file role.storagemanager.js
+ * @description Defines the behavior for the storage manager role, which transfers energy between storage structures.
  * @author Kellan Cook
  * @version 0.2
  */
 
-var rolestoragemanager = {
+var roleStorageManager = {
   /**
-   * This function is the main entry point for the storage manager creep logic. It is called for each storage manager creep in the game.
+   * Main logic for the storage manager role.
    * @param {Creep} creep - The creep to run the logic for.
    */
-
-  //starts the function
   run: function (creep) {
-    // If the creep has more than 1 energy, it should switch to transferring.
-    if (creep.store.getUsedCapacity() > 1) {
-      creep.memory.task = true;
+    // State transition: Harvesting <-> Transferring
+    if (creep.memory.task == "transfering" && creep.store[RESOURCE_ENERGY] == 0) {
+      creep.memory.task = "harvesting";
+      creep.say("harvesting");
+    }
+    if (
+      creep.memory.task == "harvesting" &&
+      creep.store.getFreeCapacity() == 0
+    ) {
+      creep.memory.task = "transfering";
+      creep.say("transfering");
     }
 
-    // If the creep has no energy, it should switch to withdrawing.
-    if (creep.store.getUsedCapacity() == 0) {
-      creep.memory.task = false;
-
-      // Finds the closest container or storage with energy.
-      var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    // Execute state
+    if (creep.memory.task == "harvesting") {
+      // Withdraw from container/storage
+      var targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_CONTAINER ||
               structure.structureType == STRUCTURE_STORAGE) &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) != 0
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
-      if (closest != null) {
-        creep.memory.currentmove = closest.id;
-      }
-    }
+      // Prioritize containers with most energy
+      targets.sort((a, b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
 
-    // If the creep is transferring, it should find the closest spawn or extension with free capacity.
-    if(creep.memory.task == true){
-      var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      if (targets.length > 0) {
+        if (creep.withdraw(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(targets[0]);
+        }
+      }
+    } else {
+      // Transfer to extension/spawn/tower
+      var targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
-            (structure.structureType == STRUCTURE_SPAWN ||
-              structure.structureType == STRUCTURE_EXTENSION) &&
+            (structure.structureType == STRUCTURE_EXTENSION ||
+              structure.structureType == STRUCTURE_SPAWN ||
+              structure.structureType == STRUCTURE_TOWER) &&
             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
-      if(closest != null){
-        creep.memory.currentmove = closest.id;
 
-      }
-
-
-    }
-    // If the creep is withdrawing, it should move to the target and withdraw energy.
-    if (creep.memory.task == false) {
-      if (creep.memory.currentmove != null) {
-        var targets = Game.getObjectById(creep.memory.currentmove);
-              var closest = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => {
-          return (
-            (structure.structureType == STRUCTURE_SPAWN ||
-              structure.structureType == STRUCTURE_EXTENSION) &&
-            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-          );
-        },
-      });
-      if (targets != null){
-        if (creep.withdraw(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets);
+      if (targets.length > 0) {
+        if (creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(targets[0]);
         }
       }
-      }
-    }
-
-    // If the creep is transferring, it should move to the target and transfer energy.
-    if (creep.memory.task == true) {
-      var targets = Game.getObjectById(creep.memory.currentmove);
-      if(creep.memory.currentmove.getFreeCapacity < 1){
-        creep.memory.task = false;
-      }
-        if (
-          creep.transfer(targets, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE
-        ) {
-          creep.moveTo(targets);
-        }
     }
   },
 };
-module.exports = rolestoragemanager;
+
+module.exports = roleStorageManager;
