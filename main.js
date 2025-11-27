@@ -12,6 +12,7 @@ var roleRepair = require("role.repair");
 var functionSpawn = require("function.spawn");
 var roleRangeDefender = require("role.rangedefender");
 var rolestoragemanager = require("role.storagemanager");
+var roleTower = require("role.tower");
 
 //var roomBuilder = require('roomBuilder');
 
@@ -29,17 +30,11 @@ module.exports.loop = function () {
     functionSpawn.run(CurSpawn);
   }
 
-  /*
-  for (var gamestruture in Game.structures){
-    
-    gamestruture.find(FIND_MY_STRUCTURES, {
-    filter: (structure) => {
-      return structure.structureType == STRUCTURE_TOWER;
-    },
-  }) 
-    roletower.run(curtower);
+  // Execute tower logic
+  var towers = _.filter(Game.structures, (s) => s.structureType == STRUCTURE_TOWER);
+  for (var tower of towers) {
+    roleTower.run(tower);
   }
-  */
 
   // Garbage collection: Clear memory of deceased creeps
   for (var name in Memory.creeps) {
@@ -82,8 +77,6 @@ module.exports.loop = function () {
     console.log("small melee: " + smallMeleeNumber.length);
     console.log("repairer: " + repairer.length);
   }
-
-
 
   // Execute role logic for each creep
   for (var name in Game.creeps) {
