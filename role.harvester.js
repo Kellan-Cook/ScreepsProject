@@ -30,45 +30,34 @@ var roleHarvester = {
         creep.moveTo(sources);
       }
     } else {
-      // Transfer to spawn or extension
-      var targets = creep.room.find(FIND_STRUCTURES, {
+      // 1. Primary Targets: Extensions, Spawns, Containers (Closest)
+      var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_EXTENSION ||
-              structure.structureType == STRUCTURE_SPAWN) &&
+              structure.structureType == STRUCTURE_SPAWN ||
+              structure.structureType == STRUCTURE_CONTAINER) &&
             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
 
-      // If spawn/extensions full, transfer to container/storage
-      if (targets.length == 0) {
-        targets = creep.room.find(FIND_STRUCTURES, {
+      // 2. Fallback Targets: Storage, Towers (Closest)
+      if (!target) {
+        target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
-              (structure.structureType == STRUCTURE_CONTAINER ||
-                structure.structureType == STRUCTURE_STORAGE) &&
+              (structure.structureType == STRUCTURE_STORAGE ||
+                structure.structureType == STRUCTURE_TOWER) &&
               structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
             );
           },
         });
       }
 
-      // If all full, transfer to tower
-      if (targets.length == 0) {
-        targets = creep.room.find(FIND_STRUCTURES, {
-          filter: (structure) => {
-            return (
-              structure.structureType == STRUCTURE_TOWER &&
-              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-            );
-          },
-        });
-      }
-
-      if (targets.length > 0) {
-        if (creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0]);
+      if (target) {
+        if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target);
         }
       }
     }
