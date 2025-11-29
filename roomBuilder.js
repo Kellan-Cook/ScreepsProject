@@ -25,8 +25,9 @@ var roomBuilder = {
 
                     const hasRoad = structures.some(s => s.structureType === STRUCTURE_ROAD) ||
                         sites.some(s => s.structureType === STRUCTURE_ROAD);
+                    const isSource = pos.lookFor(LOOK_SOURCES).length > 0;
 
-                    if (!hasRoad) {
+                    if (!hasRoad && !isSource) {
                         spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
                     }
                 }
