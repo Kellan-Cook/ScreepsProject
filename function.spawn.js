@@ -19,10 +19,14 @@ var functionSpawn = {
     var spawnEng = spawner.room.energyAvailable;
 
     // Initialize spawner memory on first run
+    if (Memory.myrooms.includes(spawner.room.name) === false) {
+      spawner.memory = {};
+    }
+
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
-      Memory.myrooms.push(spawner.room.name);
       roomBuilder.run(spawner);
+      Memory.myrooms.push(spawner.room.name);
       spawner.memory.firstrun = false;
     }
 
