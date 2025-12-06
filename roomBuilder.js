@@ -35,8 +35,29 @@ var roomBuilder = {
         }
 
         this.createSourceContainers(spawner);
+        this.roadtoroomcontroller(spawner);
     },
+    roadtoroomcontroller: function (spawner) {
 
+        const controller = spawner.room.controller;
+        if (!controller) return;
+
+        const path = spawner.pos.findPathTo(controller, { ignoreCreeps: true });
+        for (const position of path) {
+            const pos = new RoomPosition(position.x, position.y, spawner.room.name);
+            const structures = pos.lookFor(LOOK_STRUCTURES);
+            const sites = pos.lookFor(LOOK_CONSTRUCTION_SITES);
+
+            const hasRoad = structures.some(s => s.structureType === STRUCTURE_ROAD) ||
+                sites.some(s => s.structureType === STRUCTURE_ROAD);
+            const isController = pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_CONTROLLER);
+
+            if (!hasRoad && !isController) {
+                spawner.room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
+            }
+        }
+
+    },
     /**
      * Places a container as close as possible to each source, prioritizing spots next to roads.
      * Scans a range of 2 around the source, avoids placing on roads, and picks the closest valid spot.
