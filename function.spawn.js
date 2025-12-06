@@ -281,7 +281,7 @@ var functionSpawn = {
           spawner.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
               return (
-                (structure.structureType == STRUCTURE_EXTENSION &&
+                (structure.structureType == STRUCTURE_EXTENSION ||
                   structure.structureType == STRUCTURE_CONTAINER) ||
                 structure.structureType == STRUCTURE_STORAGE
               );
@@ -294,7 +294,7 @@ var functionSpawn = {
             spawner.spawnCreep(
               [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
               newName,
-              { memory: { role: "storagemanager", homespawner: spawner.name } }
+              { memory: { role: "storagemanager", task: "harvesting", homespawner: spawner.name } }
             );
           }
         }

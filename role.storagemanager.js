@@ -12,6 +12,9 @@ var roleStorageManager = {
    */
   run: function (creep) {
     // State transition: Harvesting <-> Transferring
+    if (!creep.memory.task) {
+      creep.memory.task = "harvesting";
+    }
     if (creep.memory.task == "transfering" && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.task = "harvesting";
     }
@@ -24,8 +27,8 @@ var roleStorageManager = {
 
     // Execute state
     if (creep.memory.task == "harvesting") {
-      // Withdraw from container/storage
-      var targets = creep.room.find(FIND_STRUCTURES, {
+      // Withdraw from closest container/storage
+      var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_CONTAINER ||
@@ -34,17 +37,15 @@ var roleStorageManager = {
           );
         },
       });
-      // Prioritize containers with most energy
-      targets.sort((a, b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
 
-      if (targets.length > 0) {
-        if (creep.withdraw(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0]);
+      if (target) {
+        if (creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target);
         }
       }
     } else {
-      // Transfer to extension/spawn/tower
-      var targets = creep.room.find(FIND_STRUCTURES, {
+      // Transfer to closest extension/spawn/tower
+      var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_EXTENSION ||
@@ -55,9 +56,9 @@ var roleStorageManager = {
         },
       });
 
-      if (targets.length > 0) {
-        if (creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0]);
+      if (target) {
+        if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target);
         }
       }
     }
