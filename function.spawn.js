@@ -30,9 +30,13 @@ var functionSpawn = {
       spawner.memory.firstrun = false;
     }
 
-    // Periodically run room builder (every 1000 ticks)
+    // Periodically run source road builder (every 1000 ticks on the 0th tick)
     if (String(Game.time).slice(-3) == "000") {
-      roomBuilder.run(spawner);
+      roomBuilder.roadtosources(spawner);
+    }
+    // Periodically run controller road builder (every 1000 ticks on the 500th tick)
+    if (String(Game.time).slice(-3) == "500") {
+      roomBuilder.roadtoroomcontroller(spawner);
     }
 
     // Check for hostile creeps

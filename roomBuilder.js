@@ -11,7 +11,7 @@ var roomBuilder = {
      * Main entry point for room builder logic. Executed for each spawner.
      * @param {StructureSpawn} spawner - The spawner to run the logic for.
      */
-    run: function (spawner) {
+    roadtosources: function (spawner) {
 
         // Place roads to sources
         for (const source of spawner.memory.roomsources) {
@@ -35,7 +35,6 @@ var roomBuilder = {
         }
 
         this.createSourceContainers(spawner);
-        this.roadtoroomcontroller(spawner);
     },
     roadtoroomcontroller: function (spawner) {
 
