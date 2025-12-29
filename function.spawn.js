@@ -25,7 +25,7 @@ var functionSpawn = {
 
     if (spawner.memory.firstrun === undefined) {
       spawner.memory.roomsources = spawner.room.find(FIND_SOURCES);
-      roomBuilder.run(spawner);
+      roomBuilder.roadtosources(spawner);
       Memory.myrooms.push(spawner.room.name);
       spawner.memory.firstrun = false;
     }
@@ -67,60 +67,20 @@ var functionSpawn = {
 
     // Spawning logic (only if not currently spawning)
     if (spawner.spawning == null) {
-      // Count existing creeps by role
-      var roomcreepsharvester = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name && x.memory.role == "harvester"
-          );
-        },
-      });
-
-      var roomcreepsupgrader = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name && x.memory.role == "upgrader"
-          );
-        },
-      });
-
-      var roomcreepsbuilder = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name && x.memory.role == "builder"
-          );
-        },
-      });
-
-      var roomcreepsrepairer = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name && x.memory.role == "repairer"
-          );
-        },
-      });
-      var roomcreepstoragemanager = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name &&
-            x.memory.role == "storagemanager"
-          );
-        },
-      });
-      var roomcreepsrangedefender = spawner.room.find(FIND_MY_CREEPS, {
-        filter: (x) => {
-          return (
-            x.memory.homespawner == spawner.name &&
-            x.memory.role == "rangedefender"
-          );
-        },
-      });
-
-      var sources = spawner.memory.roomsources;
+      // Count existing creeps by role efficiently
       var roomcreeps = spawner.room.find(FIND_MY_CREEPS);
 
+      var roomcreepsharvester = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "harvester");
+      var roomcreepsupgrader = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "upgrader");
+      var roomcreepsbuilder = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "builder");
+      var roomcreepsrepairer = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "repairer");
+      var roomcreepstoragemanager = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "storagemanager");
+      var roomcreepsrangedefender = _.filter(roomcreeps, (x) => x.memory.homespawner == spawner.name && x.memory.role == "rangedefender");
+
+      var sources = spawner.memory.roomsources;
+
       // Spawn defenders if needed
-      if (hostile.length > roomcreepsrangedefender) {
+      if (hostile.length > roomcreepsrangedefender.length) {
         var newName = "rangedefender" + Game.time;
         if (spawnEng >= 450 && spawner.spawning == null) {
           console.log("Spawning new defender: " + newName);

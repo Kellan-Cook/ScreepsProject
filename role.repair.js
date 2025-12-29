@@ -39,9 +39,9 @@ var roleRepair = {
           creep.moveTo(targets[0]);
         }
       } else {
-        // If nothing to repair, act as builder
-        var roleBuilder = require("role.builder");
-        roleBuilder.run(creep);
+        // If nothing to repair, act as upgrader
+        var roleUpgrader = require("role.upgrader");
+        roleUpgrader.run(creep);
       }
     } else {
       // Withdraw from storage/container or harvest

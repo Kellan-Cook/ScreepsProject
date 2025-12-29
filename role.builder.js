@@ -11,7 +11,7 @@ var roleBuilder = {
    * @param {Creep} creep - The creep to run the logic for.
    */
   run: function (creep) {
-    var roleRepair = require("role.repair");
+    var roleUpgrader = require("role.upgrader");
 
     // State transition: Harvesting <-> Building
     if (creep.memory.building && creep.store[RESOURCE_ENERGY] == 0) {
@@ -30,8 +30,8 @@ var roleBuilder = {
           creep.moveTo(targets[0]);
         }
       } else {
-        // If no construction sites, act as repairer
-        roleRepair.run(creep);
+        // If no construction sites, act as upgrader
+        roleUpgrader.run(creep);
       }
     } else {
       // Withdraw from storage/container or harvest
