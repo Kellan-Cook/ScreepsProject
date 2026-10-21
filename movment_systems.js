@@ -10,14 +10,14 @@
  * @param {RoomObject} target - The target to move to.
  * @param {number} wantedRange - The desired range to the target.
  */
-function basicmovment(creep, target, wantedRange){
-
-    if(creep.pos.getRangeTo(target) > wantedRange){
-
-        creep.moveTo(target)
-    }
-
-
-
-
+function basicmovment(creep, target, wantedRange) {
+  if (!creep || !target) return;
+  var range = wantedRange !== undefined ? wantedRange : 1;
+  if (creep.pos.getRangeTo(target) > range) {
+    creep.moveTo(target);
+  }
 }
+
+module.exports = {
+  basicmovment: basicmovment,
+};

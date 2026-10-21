@@ -38,9 +38,17 @@ var rolerepair = {
         if (creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
           creep.moveTo(targets[0]);
         }
+      } else {
+        // Fallback: build construction sites or upgrade controller if nothing to repair
+        var site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
+        if (site) {
+          if (creep.build(site) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(site);
+          }
+        }
       }
     } else {
-      // If the creep is not repairing, it should find an energy source and harvest from it.
+      // If the creep is not repairing, it should find an energy source and withdraw from it.
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
@@ -54,6 +62,14 @@ var rolerepair = {
       if (target) {
         if (creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           creep.moveTo(target);
+        }
+      } else {
+        // Fallback to active source if no containers/storage with energy exist
+        var source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+        if (source) {
+          if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(source);
+          }
         }
       }
     }
