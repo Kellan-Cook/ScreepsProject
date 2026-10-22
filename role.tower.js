@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the tower structure.
  * @author Kellan Cook
- * @version 0.2
+ * @version 0.3
  */
 
 var roletower = {
@@ -28,6 +28,17 @@ var roletower = {
     if (damagedCreep != null) {
       curtower.heal(damagedCreep);
       return;
+    }
+
+    // Emergency reinforcement for newly built or critical ramparts (spawn with 1 hit)
+    if (curtower.store[RESOURCE_ENERGY] > 200) {
+      var criticalRampart = curtower.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+        filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < 5000,
+      });
+      if (criticalRampart != null) {
+        curtower.repair(criticalRampart);
+        return;
+      }
     }
 
     // If no hostile creeps and tower has surplus energy, repair structures

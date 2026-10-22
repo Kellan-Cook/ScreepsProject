@@ -37,7 +37,11 @@ var functionSpawn = {
       spawner.memory.firstrun = false;
     }
 
-    if (String(Game.time).slice(-3) == "000") {
+    var currentRCL = spawner.room.controller
+      ? spawner.room.controller.level
+      : 0;
+    if (spawner.memory.lastRCL !== currentRCL || Game.time % 200 === 0) {
+      spawner.memory.lastRCL = currentRCL;
       roomBuilder.run(spawner);
     }
 
