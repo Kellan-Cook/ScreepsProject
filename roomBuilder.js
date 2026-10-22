@@ -1,8 +1,10 @@
 /**
- * @file This module contains logic for automated road, container, extension, and defensive choke point placement.
+ * @file This module contains logic for automated road, container, extension, and gapless defensive choke point placement.
  * @author Kellan Cook
- * @version 0.5
+ * @version 0.6
  */
+
+var minCut = require("util.mincut");
 
 var roomBuilder = {
   /**
@@ -24,7 +26,7 @@ var roomBuilder = {
     // 2. Build extensions and connecting roads based on room controller level
     this.buildExtensions(spawner);
 
-    // 3. Detect ideal choke points and place defensive ramparts
+    // 3. Detect complete, gapless choke points and place defensive ramparts
     this.buildChokePointRamparts(spawner);
   },
 
@@ -269,8 +271,8 @@ var roomBuilder = {
   },
 
   /**
-   * Detects natural terrain bottlenecks (choke points) between room exits and the spawner,
-   * then creates rampart construction sites to fortify those choke points and the core spawn.
+   * Detects complete, gapless choke point cuts using the 8-directional Min-Cut algorithm,
+   * then creates rampart construction sites to seal off the base from all room exits.
    * @param {StructureSpawn} spawner
    */
   buildChokePointRamparts: function (spawner) {
@@ -293,215 +295,117 @@ var roomBuilder = {
 
     for (var c = 0; c < corePositions.length; c++) {
       var corePos = corePositions[c];
-      var hasRampart =
-        room
-          .lookForAt(LOOK_STRUCTURES, corePos.x, corePos.y)
-          .some((s) => s.structureType === STRUCTURE_RAMPART);
-      var hasRampartSite =
-        room
-          .lookForAt(LOOK_CONSTRUCTION_SITES, corePos.x, corePos.y)
-          .some((s) => s.structureType === STRUCTURE_RAMPART);
+      var hasRampart = room
+        .lookForAt(LOOK_STRUCTURES, corePos.x, corePos.y)
+        .some((s) => s.structureType === STRUCTURE_RAMPART);
+      var hasRampartSite = room
+        .lookForAt(LOOK_CONSTRUCTION_SITES, corePos.x, corePos.y)
+        .some((s) => s.structureType === STRUCTURE_RAMPART);
 
       if (!hasRampart && !hasRampartSite) {
         room.createConstructionSite(corePos.x, corePos.y, STRUCTURE_RAMPART);
       }
     }
 
-    // 2. Identify and fortify the ideal natural choke points
-    var chokepoints = this.findChokePoints(spawner);
+    // 2. Identify the core base zone to protect with the perimeter
+    var spawnPos = spawner.pos;
+    var protectedRects = [
+      {
+        x1: Math.max(3, spawnPos.x - 5),
+        y1: Math.max(3, spawnPos.y - 5),
+        x2: Math.min(46, spawnPos.x + 5),
+        y2: Math.min(46, spawnPos.y + 5),
+      },
+    ];
 
-    for (var i = 0; i < chokepoints.length; i++) {
-      var choke = chokepoints[i];
+    // Include any structures (extensions, storage, towers) that extend beyond the main 5-tile radius
+    var vitalStructures = room.find(FIND_MY_STRUCTURES, {
+      filter: function (s) {
+        return (
+          s.structureType === STRUCTURE_EXTENSION ||
+          s.structureType === STRUCTURE_STORAGE ||
+          s.structureType === STRUCTURE_TOWER
+        );
+      },
+    });
 
-      for (var p = 0; p < choke.positions.length; p++) {
-        var pos = choke.positions[p];
+    for (var vs = 0; vs < vitalStructures.length; vs++) {
+      var sPos = vitalStructures[vs].pos;
+      if (
+        sPos.x < protectedRects[0].x1 ||
+        sPos.x > protectedRects[0].x2 ||
+        sPos.y < protectedRects[0].y1 ||
+        sPos.y > protectedRects[0].y2
+      ) {
+        protectedRects.push({
+          x1: Math.max(3, sPos.x - 1),
+          y1: Math.max(3, sPos.y - 1),
+          x2: Math.min(46, sPos.x + 1),
+          y2: Math.min(46, sPos.y + 1),
+        });
+      }
+    }
 
-        var exists =
-          room
-            .lookForAt(LOOK_STRUCTURES, pos.x, pos.y)
-            .some((s) => s.structureType === STRUCTURE_RAMPART);
-        var siteExists =
-          room
-            .lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
-            .some((s) => s.structureType === STRUCTURE_RAMPART);
+    // 3. Compute mathematically proven gapless choke cut tiles
+    var cutPositions = this.findChokePoints(spawner, protectedRects);
 
-        if (!exists && !siteExists) {
-          room.createConstructionSite(pos.x, pos.y, STRUCTURE_RAMPART);
+    var maxNewSites = Math.max(
+      0,
+      80 - room.find(FIND_CONSTRUCTION_SITES).length
+    );
+    var sitesPlaced = 0;
+
+    for (var i = 0; i < cutPositions.length; i++) {
+      var pos = cutPositions[i];
+
+      var hasRampart = room
+        .lookForAt(LOOK_STRUCTURES, pos.x, pos.y)
+        .some((s) => s.structureType === STRUCTURE_RAMPART);
+      var hasRampartSite = room
+        .lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
+        .some((s) => s.structureType === STRUCTURE_RAMPART);
+
+      if (!hasRampart && !hasRampartSite && sitesPlaced < maxNewSites) {
+        var res = room.createConstructionSite(pos.x, pos.y, STRUCTURE_RAMPART);
+        if (res === OK) {
+          sitesPlaced++;
         }
+      }
 
-        // Draw in-game visual defense marker
-        if (room.visual) {
-          room.visual.circle(pos.x, pos.y, {
-            fill: "#00ffff",
-            radius: 0.35,
-            opacity: 0.3,
-          });
-        }
+      // Draw in-game visual defense barrier
+      if (room.visual) {
+        room.visual.circle(pos.x, pos.y, {
+          fill: "#00ffcc",
+          radius: 0.35,
+          opacity: 0.35,
+        });
       }
     }
   },
 
   /**
-   * Analyzes room geometry and terrain to find optimal bottleneck choke cuts
-   * between room exits and the spawner.
+   * Finds all optimal choke cut tiles using 8-directional Min-Cut network flow.
+   * Ensures 100% gapless protection against any path from any room exit to the base.
    * @param {StructureSpawn} spawner
-   * @returns {Array<{width: number, positions: RoomPosition[], rangeToSpawn: number}>}
+   * @param {Array<{x1: number, y1: number, x2: number, y2: number}>} [protectedRects]
+   * @returns {RoomPosition[]}
    */
-  findChokePoints: function (spawner) {
+  findChokePoints: function (spawner, protectedRects) {
     var room = spawner.room;
-    var terrain = room.getTerrain();
     var spawnPos = spawner.pos;
 
-    // Retrieve all exit tiles in the room
-    var exits = room.find(FIND_EXIT);
-    if (!exits || exits.length === 0) return [];
-
-    // Group exit positions by direction to sample each approach corridor
-    var exitsByDir = { top: [], right: [], bottom: [], left: [] };
-    for (var i = 0; i < exits.length; i++) {
-      var e = exits[i];
-      if (e.y === 0) exitsByDir.top.push(e);
-      else if (e.x === 49) exitsByDir.right.push(e);
-      else if (e.y === 49) exitsByDir.bottom.push(e);
-      else if (e.x === 0) exitsByDir.left.push(e);
+    if (!protectedRects) {
+      protectedRects = [
+        {
+          x1: Math.max(3, spawnPos.x - 5),
+          y1: Math.max(3, spawnPos.y - 5),
+          x2: Math.min(46, spawnPos.x + 5),
+          y2: Math.min(46, spawnPos.y + 5),
+        },
+      ];
     }
 
-    var sampleExits = [];
-    for (var dir in exitsByDir) {
-      var list = exitsByDir[dir];
-      if (list.length > 0) {
-        // Sample the median exit tile from each entry border
-        var mid = list[Math.floor(list.length / 2)];
-        sampleExits.push(mid);
-      }
-    }
-
-    var detectedChokes = [];
-    var maxChokeWidth = 4; // Ideal chokepoints are narrow (1 to 4 tiles between terrain walls)
-
-    for (var s = 0; s < sampleExits.length; s++) {
-      var exitPos = sampleExits[s];
-      var path = room.findPath(exitPos, spawnPos, {
-        ignoreCreeps: true,
-        ignoreRoads: true,
-      });
-
-      var bestChokeForPath = null;
-
-      for (var p = 0; p < path.length; p++) {
-        var step = path[p];
-        var x = step.x;
-        var y = step.y;
-
-        // Must be in safe build zone (at least 3 tiles away from room edges)
-        if (x < 3 || x > 46 || y < 3 || y > 46) continue;
-
-        var rangeToSpawn = spawnPos.getRangeTo(x, y);
-        // Chokepoint should be between range 4 and 20 from spawn
-        // (Within tower reach, but outside core base infrastructure)
-        if (rangeToSpawn < 4 || rangeToSpawn > 20) continue;
-
-        // Check Horizontal Cut (natural wall to the left and right along y = step.y)
-        var leftWallX = -1;
-        for (var lx = x - 1; lx >= Math.max(1, x - 5); lx--) {
-          if (terrain.get(lx, y) === TERRAIN_MASK_WALL) {
-            leftWallX = lx;
-            break;
-          }
-        }
-
-        var rightWallX = -1;
-        for (var rx = x + 1; rx <= Math.min(48, x + 5); rx++) {
-          if (terrain.get(rx, y) === TERRAIN_MASK_WALL) {
-            rightWallX = rx;
-            break;
-          }
-        }
-
-        if (leftWallX !== -1 && rightWallX !== -1) {
-          var widthH = rightWallX - leftWallX - 1;
-          if (widthH >= 1 && widthH <= maxChokeWidth) {
-            var validH = true;
-            var hPositions = [];
-            for (var tx = leftWallX + 1; tx < rightWallX; tx++) {
-              if (terrain.get(tx, y) === TERRAIN_MASK_WALL) {
-                validH = false;
-                break;
-              }
-              hPositions.push(new RoomPosition(tx, y, room.name));
-            }
-            if (validH && hPositions.length > 0) {
-              var chokeH = {
-                width: widthH,
-                positions: hPositions,
-                rangeToSpawn: rangeToSpawn,
-              };
-              if (
-                !bestChokeForPath ||
-                chokeH.width < bestChokeForPath.width ||
-                (chokeH.width === bestChokeForPath.width &&
-                  chokeH.rangeToSpawn < bestChokeForPath.rangeToSpawn)
-              ) {
-                bestChokeForPath = chokeH;
-              }
-            }
-          }
-        }
-
-        // Check Vertical Cut (natural wall above and below along x = step.x)
-        var topWallY = -1;
-        for (var ty = y - 1; ty >= Math.max(1, y - 5); ty--) {
-          if (terrain.get(x, ty) === TERRAIN_MASK_WALL) {
-            topWallY = ty;
-            break;
-          }
-        }
-
-        var bottomWallY = -1;
-        for (var by = y + 1; by <= Math.min(48, y + 5); by++) {
-          if (terrain.get(x, by) === TERRAIN_MASK_WALL) {
-            bottomWallY = by;
-            break;
-          }
-        }
-
-        if (topWallY !== -1 && bottomWallY !== -1) {
-          var widthV = bottomWallY - topWallY - 1;
-          if (widthV >= 1 && widthV <= maxChokeWidth) {
-            var validV = true;
-            var vPositions = [];
-            for (var ty2 = topWallY + 1; ty2 < bottomWallY; ty2++) {
-              if (terrain.get(x, ty2) === TERRAIN_MASK_WALL) {
-                validV = false;
-                break;
-              }
-              vPositions.push(new RoomPosition(x, ty2, room.name));
-            }
-            if (validV && vPositions.length > 0) {
-              var chokeV = {
-                width: widthV,
-                positions: vPositions,
-                rangeToSpawn: rangeToSpawn,
-              };
-              if (
-                !bestChokeForPath ||
-                chokeV.width < bestChokeForPath.width ||
-                (chokeV.width === bestChokeForPath.width &&
-                  chokeV.rangeToSpawn < bestChokeForPath.rangeToSpawn)
-              ) {
-                bestChokeForPath = chokeV;
-              }
-            }
-          }
-        }
-      }
-
-      if (bestChokeForPath) {
-        detectedChokes.push(bestChokeForPath);
-      }
-    }
-
-    return detectedChokes;
+    return minCut.getCutTiles(room, protectedRects);
   },
 };
 
