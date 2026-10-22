@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the harvester creep role.
  * @author Kellan Cook
- * @version 0.9
+ * @version 1.0
  */
 
 var roleHarvester = {
@@ -17,25 +17,29 @@ var roleHarvester = {
       var targetsource = Game.getObjectById(creep.memory.roomsources);
       if (targetsource) {
         // Check for nearby containers and construction sites.
-        var containers = targetsource.pos.findInRange(FIND_STRUCTURES, 3, {
+        var containers = targetsource.pos.findInRange(FIND_STRUCTURES, 2, {
           filter: { structureType: STRUCTURE_CONTAINER },
         });
         var constructionSites = targetsource.pos.findInRange(
           FIND_CONSTRUCTION_SITES,
-          3,
+          2,
           {
             filter: { structureType: STRUCTURE_CONTAINER },
           }
         );
 
-        // If no containers or construction sites are found, create a new construction site.
+        // If no containers or construction sites are found, create a new construction site adjacent to source.
         if (containers.length === 0 && constructionSites.length === 0) {
           let positions = [];
-          for (let x = targetsource.pos.x - 2; x <= targetsource.pos.x + 2; x++) {
-            for (let y = targetsource.pos.y - 2; y <= targetsource.pos.y + 2; y++) {
+          for (let x = targetsource.pos.x - 1; x <= targetsource.pos.x + 1; x++) {
+            for (let y = targetsource.pos.y - 1; y <= targetsource.pos.y + 1; y++) {
               if (
+                x >= 0 &&
+                x <= 49 &&
+                y >= 0 &&
+                y <= 49 &&
+                !(x === targetsource.pos.x && y === targetsource.pos.y) &&
                 creep.room.getTerrain().get(x, y) !== TERRAIN_MASK_WALL &&
-                targetsource.pos.getRangeTo(x, y) > 1 &&
                 creep.room.lookForAt(LOOK_STRUCTURES, x, y).length === 0 &&
                 creep.room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length === 0
               ) {
@@ -73,31 +77,42 @@ var roleHarvester = {
         }
       }
     } else {
-      // Priority 1: Fill spawns and extensions first so creep generation is never blocked
+      // Priority 1: Prefer the closest container with free capacity
       var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
-            (structure.structureType == STRUCTURE_SPAWN ||
-              structure.structureType == STRUCTURE_EXTENSION) &&
+            structure.structureType == STRUCTURE_CONTAINER &&
             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
 
-      // Priority 2: Fill containers and storage
+      // Priority 2: If no container available, check storage
       if (!target) {
         target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
-              (structure.structureType == STRUCTURE_CONTAINER ||
-                structure.structureType == STRUCTURE_STORAGE) &&
+              structure.structureType == STRUCTURE_STORAGE &&
               structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
             );
           },
         });
       }
 
-      // Priority 3: Fill towers if needed
+      // Priority 3: Fallback to spawns and extensions if containers/storage are not built or are full
+      if (!target) {
+        target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              (structure.structureType == STRUCTURE_SPAWN ||
+                structure.structureType == STRUCTURE_EXTENSION) &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+      }
+
+      // Priority 4: Fallback to towers if needed
       if (!target) {
         target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
