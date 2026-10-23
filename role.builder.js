@@ -1,10 +1,11 @@
 /**
  * @file This module contains the logic for the builder creep role.
  * @author Kellan Cook
- * @version 0.2
+ * @version 0.3
  */
 
 var roleRepair = require("role.repair");
+var roleStorageManager = require("role.storagemanager");
 
 var roleBuilder = {
   /**
@@ -35,22 +36,42 @@ var roleBuilder = {
         roleRepair.run(creep);
       }
     } else {
-      // If the creep is not building, it should find container/storage or harvest from a source.
+      // Priority 1: Withdraw from non-controller containers or storage so upgraders keep their buffer
       var storageTarget = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
           return (
             (structure.structureType == STRUCTURE_CONTAINER ||
               structure.structureType == STRUCTURE_STORAGE) &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 1
+            !roleStorageManager.isControllerContainer(structure, creep) &&
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
 
+      // Priority 2: Fallback to any container/storage with energy
+      if (!storageTarget) {
+        storageTarget = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              (structure.structureType == STRUCTURE_CONTAINER ||
+                structure.structureType == STRUCTURE_STORAGE) &&
+              structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+      }
+
       if (storageTarget) {
-        if (creep.withdraw(storageTarget, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        var withdrawRes = creep.withdraw(storageTarget, RESOURCE_ENERGY);
+        if (withdrawRes == ERR_NOT_IN_RANGE) {
           creep.moveTo(storageTarget, {
             visualizePathStyle: { stroke: "#ffaa00" },
           });
+        } else if (
+          withdrawRes == OK &&
+          creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+        ) {
+          creep.memory.building = true;
         }
       } else {
         // If there are no containers or storage with energy, the builder should harvest from an active source.
@@ -61,6 +82,8 @@ var roleBuilder = {
               visualizePathStyle: { stroke: "#ffaa00" },
             });
           }
+        } else if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+          creep.memory.building = true;
         }
       }
     }

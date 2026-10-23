@@ -1,7 +1,7 @@
 /**
  * @file This module contains the logic for the harvester creep role.
  * @author Kellan Cook
- * @version 1.0
+ * @version 1.1
  */
 
 var roleHarvester = {
@@ -31,26 +31,56 @@ var roleHarvester = {
         // If no containers or construction sites are found, create a new construction site adjacent to source.
         if (containers.length === 0 && constructionSites.length === 0) {
           let positions = [];
-          for (let x = targetsource.pos.x - 1; x <= targetsource.pos.x + 1; x++) {
-            for (let y = targetsource.pos.y - 1; y <= targetsource.pos.y + 1; y++) {
+          for (
+            let x = targetsource.pos.x - 1;
+            x <= targetsource.pos.x + 1;
+            x++
+          ) {
+            for (
+              let y = targetsource.pos.y - 1;
+              y <= targetsource.pos.y + 1;
+              y++
+            ) {
               if (
-                x >= 0 &&
-                x <= 49 &&
-                y >= 0 &&
-                y <= 49 &&
+                x >= 1 &&
+                x <= 48 &&
+                y >= 1 &&
+                y <= 48 &&
                 !(x === targetsource.pos.x && y === targetsource.pos.y) &&
                 creep.room.getTerrain().get(x, y) !== TERRAIN_MASK_WALL &&
-                creep.room.lookForAt(LOOK_STRUCTURES, x, y).length === 0 &&
-                creep.room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length === 0
+                creep.room
+                  .lookForAt(LOOK_STRUCTURES, x, y)
+                  .every(
+                    (s) =>
+                      s.structureType === STRUCTURE_ROAD ||
+                      s.structureType === STRUCTURE_RAMPART
+                  ) &&
+                creep.room
+                  .lookForAt(LOOK_CONSTRUCTION_SITES, x, y)
+                  .every((s) => s.structureType === STRUCTURE_ROAD)
               ) {
                 positions.push(new RoomPosition(x, y, creep.room.name));
               }
             }
           }
 
-          // Select a position from the valid positions.
+          // Select a position from the valid positions, preferring existing roads/road blueprints.
           if (positions.length > 0) {
-            let pos = positions[Math.floor(Math.random() * positions.length)];
+            let pos = positions[0];
+            for (let p = 0; p < positions.length; p++) {
+              let hasRoad =
+                positions[p].findInRange(FIND_STRUCTURES, 1, {
+                  filter: { structureType: STRUCTURE_ROAD },
+                }).length > 0;
+              let hasBlueprint =
+                positions[p].findInRange(FIND_CONSTRUCTION_SITES, 1, {
+                  filter: { structureType: STRUCTURE_ROAD },
+                }).length > 0;
+              if (hasRoad || hasBlueprint) {
+                pos = positions[p];
+                break;
+              }
+            }
             creep.room.createConstructionSite(pos, STRUCTURE_CONTAINER);
           }
         }
@@ -64,28 +94,52 @@ var roleHarvester = {
 
     // If the creep is harvesting, it should move to the source and harvest it.
     if (creep.memory.task == "harvesting") {
-      var targetsource = Game.getObjectById(creep.memory.roomsources);
-      if (!targetsource) {
-        targetsource = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+      var harvestSource = Game.getObjectById(creep.memory.roomsources);
+      if (!harvestSource) {
+        harvestSource = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
       }
 
-      if (targetsource) {
-        if (creep.harvest(targetsource) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targetsource, {
+      if (harvestSource) {
+        if (creep.harvest(harvestSource) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(harvestSource, {
             visualizePathStyle: { stroke: "#ffaa00" },
           });
         }
       }
     } else {
+      var target = null;
+
+      // Check if any storage manager exists in the room.
+      // If 0 storage managers exist and spawn energy is below 300, feed spawn/extensions directly
+      // so the room can spawn a storage manager and avoid a logistics deadlock.
+      var hasStorageManager =
+        creep.room.find(FIND_MY_CREEPS, {
+          filter: (c) => c.memory && c.memory.role === "storagemanager",
+        }).length > 0;
+
+      if (!hasStorageManager && creep.room.energyAvailable < 300) {
+        target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              (structure.structureType == STRUCTURE_SPAWN ||
+                structure.structureType == STRUCTURE_EXTENSION) &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+      }
+
       // Priority 1: Prefer the closest container with free capacity
-      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => {
-          return (
-            structure.structureType == STRUCTURE_CONTAINER &&
-            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-          );
-        },
-      });
+      if (!target) {
+        target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              structure.structureType == STRUCTURE_CONTAINER &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+      }
 
       // Priority 2: If no container available, check storage
       if (!target) {

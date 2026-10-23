@@ -3,30 +3,45 @@
  * Computes the mathematically optimal, gapless defensive barrier enclosing the base
  * across natural terrain choke points using Dinic's Max-Flow / Min-Cut algorithm.
  * @author Kellan Cook
- * @version 1.0
+ * @version 1.1
  */
 
 var minCut = {
   /**
-   * Computes the minimum cut of walkable tiles separating all room exits from the protected base zone.
+   * Computes both the minimum cut rampart positions and the interior protected grid
+   * separating all room exits from the protected base zone.
    * Guaranteed to leave zero openings/gaps against 8-directional creep movement.
    *
    * @param {Room} room - The Screeps room object.
    * @param {Array<{x1: number, y1: number, x2: number, y2: number}>} protectedRects - Core areas to protect.
-   * @returns {RoomPosition[]} Array of positions forming the complete defensive perimeter.
+   * @returns {{cutTiles: RoomPosition[], insideGrid: Uint8Array}}
    */
-  getCutTiles: function (room, protectedRects) {
-    if (!room) return [];
-
-    var exits = room.find(FIND_EXIT);
-    if (!exits || exits.length === 0) return [];
+  calculate: function (room, protectedRects) {
+    var emptyResult = {
+      cutTiles: [],
+      insideGrid: new Uint8Array(2500),
+    };
+    if (!room) return emptyResult;
 
     var terrain = room.getTerrain();
+    var exits = room.find(FIND_EXIT);
+
+    // If room has no exits, all walkable tiles are safe/inside
+    if (!exits || exits.length === 0) {
+      for (var iy = 0; iy < 50; iy++) {
+        for (var ix = 0; ix < 50; ix++) {
+          if (terrain.get(ix, iy) !== TERRAIN_MASK_WALL) {
+            emptyResult.insideGrid[iy * 50 + ix] = 1;
+          }
+        }
+      }
+      return emptyResult;
+    }
 
     // Tile classifications:
     // 0: Walkable / Cuttable candidate
     // 1: Wall (impassable)
-    // 2: Exit buffer zone (cannot place ramparts near room border)
+    // 2: Exit buffer zone (cannot place ramparts within 2 tiles of room border)
     // 3: Protected zone (must not be cut)
     var grid = new Uint8Array(2500);
 
@@ -45,7 +60,7 @@ var minCut = {
 
     // Mark protected zones
     if (!protectedRects || protectedRects.length === 0) {
-      return [];
+      return emptyResult;
     }
 
     for (var r = 0; r < protectedRects.length; r++) {
@@ -61,6 +76,25 @@ var minCut = {
           if (grid[pIdx] !== 1) {
             grid[pIdx] = 3; // Protected
           }
+        }
+      }
+    }
+
+    // Pre-mark existing ramparts and rampart construction sites to prefer reusing them on ties
+    var hasExistingRampart = new Uint8Array(2500);
+    if (typeof FIND_STRUCTURES !== "undefined") {
+      var structures = room.find(FIND_STRUCTURES) || [];
+      for (var s = 0; s < structures.length; s++) {
+        if (structures[s].structureType === STRUCTURE_RAMPART) {
+          hasExistingRampart[structures[s].pos.y * 50 + structures[s].pos.x] = 1;
+        }
+      }
+    }
+    if (typeof FIND_CONSTRUCTION_SITES !== "undefined") {
+      var sites = room.find(FIND_CONSTRUCTION_SITES) || [];
+      for (var cs = 0; cs < sites.length; cs++) {
+        if (sites[cs].structureType === STRUCTURE_RAMPART) {
+          hasExistingRampart[sites[cs].pos.y * 50 + sites[cs].pos.x] = 1;
         }
       }
     }
@@ -97,15 +131,12 @@ var minCut = {
 
     var INF = 100000;
 
-    // Connect exit buffer tiles that connect to room borders
+    // Connect Source S directly to all exit tiles so flow naturally navigates around border walls
     for (var e = 0; e < exits.length; e++) {
       var exitPos = exits[e];
-      // Step inward from exit tile to find entry point at range 2
-      var inwardX = Math.max(2, Math.min(47, exitPos.x));
-      var inwardY = Math.max(2, Math.min(47, exitPos.y));
-      var inIdx = inwardY * 50 + inwardX;
-      if (grid[inIdx] !== 1) {
-        var entryInNode = 2 + 2 * inIdx;
+      var exitIdx = exitPos.y * 50 + exitPos.x;
+      if (grid[exitIdx] !== 1) {
+        var entryInNode = 2 + 2 * exitIdx;
         addEdge(S, entryInNode, INF);
       }
     }
@@ -131,14 +162,8 @@ var minCut = {
           addEdge(uIn, uOut, INF);
           addEdge(uOut, T, INF);
         } else {
-          // Normal candidate tile: unit capacity (cost 1 to cut)
-          // Prefer existing ramparts if already built
-          var existingRampart = room
-            .lookForAt(LOOK_STRUCTURES, x, y)
-            .some(function (s) {
-              return s.structureType === STRUCTURE_RAMPART;
-            });
-          var cost = existingRampart ? 1 : 1;
+          // Normal candidate tile: cost 2, or cost 1 if rampart already exists (prefers reusing existing ramparts)
+          var cost = hasExistingRampart[idx] ? 1 : 2;
           addEdge(uIn, uOut, cost);
         }
 
@@ -224,22 +249,44 @@ var minCut = {
       }
     }
 
-    // Identify saturated cut edges (uIn visited, uOut unvisited)
+    // Identify saturated cut edges (uIn visited, uOut unvisited) and interior protected tiles (!visited[uOut])
     var cutPositions = [];
+    var insideGrid = new Uint8Array(2500);
+
     for (var y = 3; y <= 46; y++) {
       for (var x = 3; x <= 46; x++) {
         var idx = y * 50 + x;
-        if (grid[idx] === 0) {
-          var uIn = 2 + 2 * idx;
-          var uOut = 2 + 2 * idx + 1;
-          if (visited[uIn] && !visited[uOut]) {
-            cutPositions.push(new RoomPosition(x, y, room.name));
-          }
+        if (grid[idx] === 1) continue;
+
+        var uIn = 2 + 2 * idx;
+        var uOut = 2 + 2 * idx + 1;
+
+        if (!visited[uOut]) {
+          // Tile is either inside the protected perimeter or on the rampart cut line itself
+          insideGrid[idx] = 1;
+        }
+
+        if (grid[idx] === 0 && visited[uIn] && !visited[uOut]) {
+          cutPositions.push(new RoomPosition(x, y, room.name));
         }
       }
     }
 
-    return cutPositions;
+    return {
+      cutTiles: cutPositions,
+      insideGrid: insideGrid,
+    };
+  },
+
+  /**
+   * Computes the minimum cut of walkable tiles separating all room exits from the protected base zone.
+   *
+   * @param {Room} room - The Screeps room object.
+   * @param {Array<{x1: number, y1: number, x2: number, y2: number}>} protectedRects - Core areas to protect.
+   * @returns {RoomPosition[]} Array of positions forming the complete defensive perimeter.
+   */
+  getCutTiles: function (room, protectedRects) {
+    return this.calculate(room, protectedRects).cutTiles;
   },
 };
 
