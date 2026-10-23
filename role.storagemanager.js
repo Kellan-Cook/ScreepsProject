@@ -49,8 +49,150 @@ var rolestoragemanager = {
     return Boolean(
       room.controller &&
         structure.pos.getRangeTo(room.controller) <= 4 &&
-        !this.isSourceContainer(structure, room)
+        !this.isSourceContainer(structure, room) &&
+        !this.isSpawnerContainer(structure, creep)
     );
+  },
+
+  /**
+   * Helper to check if a container is the designated spawner storage container.
+   * Checks room.memory.storageContainer / room.memory.spawnerContainer first,
+   * then falls back to range <= 3 of any spawn (excluding source and controller containers).
+   * @param {Structure} structure
+   * @param {Creep} creep
+   * @returns {boolean}
+   */
+  isSpawnerContainer: function (structure, creep) {
+    if (!structure || structure.structureType !== STRUCTURE_CONTAINER) {
+      return false;
+    }
+    var room = creep.room;
+    if (
+      room.memory &&
+      (room.memory.storageContainer || room.memory.spawnerContainer)
+    ) {
+      var sc = room.memory.storageContainer || room.memory.spawnerContainer;
+      if (sc.id && structure.id === sc.id) return true;
+      if (structure.pos.x === sc.x && structure.pos.y === sc.y) {
+        sc.id = structure.id;
+        return true;
+      }
+      return false;
+    }
+    var spawns = room.find(FIND_MY_SPAWNS);
+    for (var i = 0; i < spawns.length; i++) {
+      if (
+        structure.pos.getRangeTo(spawns[i].pos) <= 3 &&
+        !this.isSourceContainer(structure, room) &&
+        (!room.controller ||
+          structure.pos.getRangeTo(room.controller.pos) > 3)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Finds the designated spawner storage container if it exists and has free capacity.
+   * @param {Room} room
+   * @param {Creep} creep
+   * @returns {StructureContainer|null}
+   */
+  getSpawnerContainerWithSpace: function (room, creep) {
+    if (!room) return null;
+    var self = this;
+
+    if (
+      room.memory &&
+      (room.memory.storageContainer || room.memory.spawnerContainer)
+    ) {
+      var sc = room.memory.storageContainer || room.memory.spawnerContainer;
+      if (sc.id) {
+        var byId = Game.getObjectById(sc.id);
+        if (byId && byId.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+          return byId;
+        }
+        if (byId) return null;
+      }
+      var structs = room.lookForAt(LOOK_STRUCTURES, sc.x, sc.y);
+      for (var i = 0; i < structs.length; i++) {
+        if (structs[i].structureType === STRUCTURE_CONTAINER) {
+          sc.id = structs[i].id;
+          if (structs[i].store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+            return structs[i];
+          }
+          return null;
+        }
+      }
+    }
+
+    var spawns = room.find(FIND_MY_SPAWNS);
+    for (var s = 0; s < spawns.length; s++) {
+      var nearby = spawns[s].pos.findInRange(FIND_STRUCTURES, 3, {
+        filter: function (st) {
+          return (
+            st.structureType === STRUCTURE_CONTAINER &&
+            !self.isSourceContainer(st, room) &&
+            !self.isControllerContainer(st, creep) &&
+            st.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          );
+        },
+      });
+      if (nearby.length > 0) return nearby[0];
+    }
+    return null;
+  },
+
+  /**
+   * Finds the designated spawner storage container if it exists and has energy.
+   * @param {Room} room
+   * @param {Creep} creep
+   * @returns {StructureContainer|null}
+   */
+  getSpawnerContainerWithEnergy: function (room, creep) {
+    if (!room) return null;
+    var self = this;
+
+    if (
+      room.memory &&
+      (room.memory.storageContainer || room.memory.spawnerContainer)
+    ) {
+      var sc = room.memory.storageContainer || room.memory.spawnerContainer;
+      if (sc.id) {
+        var byId = Game.getObjectById(sc.id);
+        if (byId && byId.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+          return byId;
+        }
+        if (byId) return null;
+      }
+      var structs = room.lookForAt(LOOK_STRUCTURES, sc.x, sc.y);
+      for (var i = 0; i < structs.length; i++) {
+        if (structs[i].structureType === STRUCTURE_CONTAINER) {
+          sc.id = structs[i].id;
+          if (structs[i].store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+            return structs[i];
+          }
+          return null;
+        }
+      }
+    }
+
+    var spawns = room.find(FIND_MY_SPAWNS);
+    for (var s = 0; s < spawns.length; s++) {
+      var nearby = spawns[s].pos.findInRange(FIND_STRUCTURES, 3, {
+        filter: function (st) {
+          return (
+            st.structureType === STRUCTURE_CONTAINER &&
+            !self.isSourceContainer(st, room) &&
+            !self.isControllerContainer(st, creep) &&
+            st.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+          );
+        },
+      });
+      if (nearby.length > 0) return nearby[0];
+    }
+    return null;
   },
 
   /**
@@ -151,7 +293,10 @@ var rolestoragemanager = {
         if (
           !sourceStructure ||
           sourceStructure.store.getUsedCapacity(RESOURCE_ENERGY) == 0 ||
-          self.isControllerContainer(sourceStructure, creep)
+          self.isControllerContainer(sourceStructure, creep) ||
+          ((self.isSpawnerContainer(sourceStructure, creep) ||
+            sourceStructure.structureType === STRUCTURE_STORAGE) &&
+            !self.nonStorageNeedsEnergy(creep))
         ) {
           sourceStructure = null;
           creep.memory.currentmove = null;
@@ -159,18 +304,27 @@ var rolestoragemanager = {
       }
 
       if (!sourceStructure) {
-        // Priority 1: Withdraw from non-controller containers with energy
+        // Priority 1: Withdraw from source containers (bringing energy from the mines)
         sourceStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
               structure.structureType == STRUCTURE_CONTAINER &&
               !self.isControllerContainer(structure, creep) &&
+              !self.isSpawnerContainer(structure, creep) &&
               structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0
             );
           },
         });
 
-        // Priority 2: Withdraw from central storage ONLY if a non-storage destination needs energy
+        // Priority 2: Withdraw from spawner storage container ONLY if spawn, extensions, towers, or controller container need energy
+        if (!sourceStructure && self.nonStorageNeedsEnergy(creep)) {
+          sourceStructure = self.getSpawnerContainerWithEnergy(
+            creep.room,
+            creep
+          );
+        }
+
+        // Priority 3: Withdraw from central storage ONLY if a non-storage destination needs energy
         if (
           !sourceStructure &&
            creep.room.storage &&
@@ -258,7 +412,15 @@ var rolestoragemanager = {
           );
         }
 
-        // Priority 4: Central Storage
+        // Priority 4: Spawner Storage Container (fills dedicated storage container near spawner)
+        if (!destStructure) {
+          destStructure = self.getSpawnerContainerWithSpace(
+            creep.room,
+            creep
+          );
+        }
+
+        // Priority 5: Central Storage
         if (!destStructure) {
           destStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (structure) => {

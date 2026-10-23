@@ -129,12 +129,14 @@ var roleHarvester = {
         });
       }
 
-      // Priority 1: Prefer the closest container with free capacity
+      // Priority 1: Prefer the closest container with free capacity (excluding controller container)
       if (!target) {
         target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
               structure.structureType == STRUCTURE_CONTAINER &&
+              (!creep.room.controller ||
+                structure.pos.getRangeTo(creep.room.controller.pos) > 3) &&
               structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
             );
           },

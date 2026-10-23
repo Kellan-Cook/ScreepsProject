@@ -144,14 +144,29 @@ var roomBuilder = {
     // 1. Build roads to sources and containers adjacent to sources (reusing existing roads/blueprints)
     this.buildSourceInfrastructure(spawner);
 
-    // 2. Build extensions and connecting roads based on room controller level
+    // 2. Build dedicated storage container near spawner within rampart perimeter
+    this.buildSpawnerStorageContainer(spawner);
+
+    // 3. Build extensions and connecting roads based on room controller level
     this.buildExtensions(spawner);
 
-    // 3. Detect complete, gapless choke points and place defensive ramparts
+    // 4. Detect complete, gapless choke points and place defensive ramparts
     var minCutResult = this.buildChokePointRamparts(spawner);
 
-    // 4. Build controller container as close as possible to controller within rampart perimeter
+    // 5. Build controller container as close as possible to controller within rampart perimeter
     this.buildControllerContainer(
+      spawner,
+      minCutResult ? minCutResult.insideGrid : null
+    );
+
+    // 6. Ensure spawner storage container is fortified if RCL >= 2 and rampart perimeter is computed
+    this.buildSpawnerStorageContainer(
+      spawner,
+      minCutResult ? minCutResult.insideGrid : null
+    );
+
+    // 7. Build central storage structure at RCL 4+ within rampart perimeter
+    this.buildStorageStructure(
       spawner,
       minCutResult ? minCutResult.insideGrid : null
     );
@@ -631,6 +646,13 @@ var roomBuilder = {
       if (cx === controllerPos.x && cy === controllerPos.y) return false;
       if (terrain.get(cx, cy) === TERRAIN_MASK_WALL) return false;
       if (self.isNearSource(room, { x: cx, y: cy })) return false;
+      if (
+        room.memory &&
+        (room.memory.storageContainer || room.memory.spawnerContainer)
+      ) {
+        var sc = room.memory.storageContainer || room.memory.spawnerContainer;
+        if (cx === sc.x && cy === sc.y) return false;
+      }
       if (self.hasInTickSiteAt(room, cx, cy)) return false;
 
       var structures = room.lookForAt(LOOK_STRUCTURES, cx, cy);
@@ -745,6 +767,406 @@ var roomBuilder = {
           };
         }
         // Connect container to road network
+        this.connectToRoadNetwork(room, bestPos);
+      }
+    }
+  },
+
+  /**
+   * Places a dedicated storage container near the spawner within the rampart perimeter.
+   * Serves as a central energy buffer next to the spawn and extensions, allowing haulers
+   * and storage managers to quickly feed the spawn and stockpile incoming energy.
+   * Fortified with a rampart once built (at RCL 2+).
+   * Records coordinates in room.memory.storageContainer and room.memory.spawnerContainer.
+   * @param {StructureSpawn} spawner
+   * @param {Uint8Array} [precomputedInsideGrid]
+   */
+  buildSpawnerStorageContainer: function (spawner, precomputedInsideGrid) {
+    var room = spawner.room;
+    if (!spawner || !room) return;
+    this.ensureTickState(room);
+
+    var self = this;
+    var spawnPos = spawner.pos;
+    var existingContainer = null;
+    var existingSite = null;
+
+    // 1. Check recorded storage container location in room.memory first
+    var memKey =
+      room.memory &&
+      (room.memory.storageContainer
+        ? "storageContainer"
+        : room.memory.spawnerContainer
+        ? "spawnerContainer"
+        : null);
+
+    if (memKey && room.memory[memKey]) {
+      var memPos = room.memory[memKey];
+      var structsAtMem = room.lookForAt(LOOK_STRUCTURES, memPos.x, memPos.y);
+      for (var s = 0; s < structsAtMem.length; s++) {
+        if (structsAtMem[s].structureType === STRUCTURE_CONTAINER) {
+          existingContainer = structsAtMem[s];
+          room.memory[memKey].id = existingContainer.id;
+          break;
+        }
+      }
+      if (!existingContainer) {
+        var sitesAtMem = room.lookForAt(
+          LOOK_CONSTRUCTION_SITES,
+          memPos.x,
+          memPos.y
+        );
+        for (var c = 0; c < sitesAtMem.length; c++) {
+          if (sitesAtMem[c].structureType === STRUCTURE_CONTAINER) {
+            existingSite = sitesAtMem[c];
+            break;
+          }
+        }
+      }
+      if (
+        !existingContainer &&
+        !existingSite &&
+        !this.hasInTickSiteAt(room, memPos.x, memPos.y, STRUCTURE_CONTAINER)
+      ) {
+        // Recorded container no longer exists (destroyed or cancelled)
+        delete room.memory.storageContainer;
+        delete room.memory.spawnerContainer;
+      }
+    }
+
+    // 2. Otherwise check within range 3 of spawner (excluding source and controller containers)
+    if (!existingContainer && !existingSite) {
+      var nearbyContainers = spawnPos.findInRange(FIND_STRUCTURES, 3, {
+        filter: function (st) {
+          return (
+            st.structureType === STRUCTURE_CONTAINER &&
+            !self.isNearSource(room, st.pos) &&
+            (!room.controller || st.pos.getRangeTo(room.controller.pos) > 3)
+          );
+        },
+      });
+      if (nearbyContainers.length > 0) {
+        existingContainer = nearbyContainers[0];
+      } else {
+        var nearbySites = spawnPos.findInRange(
+          FIND_CONSTRUCTION_SITES,
+          3,
+          {
+            filter: function (st) {
+              return (
+                st.structureType === STRUCTURE_CONTAINER &&
+                !self.isNearSource(room, st.pos) &&
+                (!room.controller || st.pos.getRangeTo(room.controller.pos) > 3)
+              );
+            },
+          }
+        );
+        if (nearbySites.length > 0) {
+          existingSite = nearbySites[0];
+        }
+      }
+    }
+
+    if (existingContainer || existingSite) {
+      var containerPos = existingContainer
+        ? existingContainer.pos
+        : existingSite.pos;
+
+      if (room.memory) {
+        var memObj = {
+          x: containerPos.x,
+          y: containerPos.y,
+          id: existingContainer ? existingContainer.id : null,
+        };
+        room.memory.storageContainer = memObj;
+        room.memory.spawnerContainer = memObj;
+      }
+
+      // Once the container is built and RCL >= 2, ensure a rampart is placed on top of it
+      if (
+        existingContainer &&
+        room.controller &&
+        room.controller.level >= 2 &&
+        this.getTotalSiteCount(room) < 85
+      ) {
+        var hasRampart = room
+          .lookForAt(LOOK_STRUCTURES, containerPos.x, containerPos.y)
+          .some((st) => st.structureType === STRUCTURE_RAMPART);
+        var hasRampartSite = room
+          .lookForAt(LOOK_CONSTRUCTION_SITES, containerPos.x, containerPos.y)
+          .some((st) => st.structureType === STRUCTURE_RAMPART);
+
+        if (
+          !hasRampart &&
+          !hasRampartSite &&
+          !this.hasInTickSiteAt(
+            room,
+            containerPos.x,
+            containerPos.y,
+            STRUCTURE_RAMPART
+          )
+        ) {
+          this.createSite(
+            room,
+            containerPos.x,
+            containerPos.y,
+            STRUCTURE_RAMPART,
+            85
+          );
+        }
+      }
+      return;
+    }
+
+    if (this.getTotalSiteCount(room) >= 85) return;
+
+    var terrain = room.getTerrain();
+
+    // 3. Determine which tiles are inside the rampart perimeter
+    var insidePerimeter = precomputedInsideGrid;
+    if (!insidePerimeter) {
+      var calc = minCut.calculate(room, this.getProtectedRects(spawner));
+      insidePerimeter = calc.insideGrid;
+    }
+
+    // Helper to check if a tile at (cx, cy) is valid for placing the spawner storage container
+    var isValidCandidate = function (cx, cy) {
+      if (cx < 2 || cx > 47 || cy < 2 || cy > 47) return false;
+      if (cx === spawnPos.x && cy === spawnPos.y) return false;
+      if (terrain.get(cx, cy) === TERRAIN_MASK_WALL) return false;
+      if (self.isNearSource(room, { x: cx, y: cy })) return false;
+      if (room.controller && room.controller.pos.getRangeTo(cx, cy) <= 2) return false;
+
+      // Do NOT block immediate cardinal roads around spawner (dx=0 or dy=0 at radius 1)
+      if (Math.abs(cx - spawnPos.x) + Math.abs(cy - spawnPos.y) === 1) {
+        return false;
+      }
+
+      // Do not overlap with controller container if recorded
+      if (
+        room.memory &&
+        room.memory.controllerContainer &&
+        cx === room.memory.controllerContainer.x &&
+        cy === room.memory.controllerContainer.y
+      ) {
+        return false;
+      }
+
+      if (self.hasInTickSiteAt(room, cx, cy)) return false;
+
+      var structures = room.lookForAt(LOOK_STRUCTURES, cx, cy);
+      var hasImpassable = structures.some(
+        (st) =>
+          st.structureType !== STRUCTURE_ROAD &&
+          st.structureType !== STRUCTURE_RAMPART
+      );
+      if (hasImpassable) return false;
+
+      var sites = room.lookForAt(LOOK_CONSTRUCTION_SITES, cx, cy);
+      var hasSite = sites.some(
+        (st) =>
+          st.structureType !== STRUCTURE_ROAD &&
+          st.structureType !== STRUCTURE_RAMPART
+      );
+      if (hasSite) return false;
+
+      return true;
+    };
+
+    // 4. Search candidate positions around spawner (radius 1 diagonal first, then expanding to radius 2..3)
+    var candidates = [];
+    for (let radius = 1; radius <= 3; radius++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+          let cx = spawnPos.x + dx;
+          let cy = spawnPos.y + dy;
+
+          if (!isValidCandidate(cx, cy)) continue;
+
+          var idx = cy * 50 + cx;
+          if (insidePerimeter && !insidePerimeter[idx]) continue;
+
+          candidates.push(new RoomPosition(cx, cy, room.name));
+        }
+      }
+    }
+
+    if (candidates.length === 0) return;
+
+    // Prioritize:
+    // 1. Diagonal distance 1 from spawner (|dx| === 1 && |dy| === 1)
+    // 2. Closer range to spawner
+    // 3. Touching an existing road or road blueprint
+    candidates.sort(function (a, b) {
+      var isDiagA =
+        Math.abs(a.x - spawnPos.x) === 1 && Math.abs(a.y - spawnPos.y) === 1;
+      var isDiagB =
+        Math.abs(b.x - spawnPos.x) === 1 && Math.abs(b.y - spawnPos.y) === 1;
+      if (isDiagA && !isDiagB) return -1;
+      if (!isDiagA && isDiagB) return 1;
+
+      var rangeA = a.getRangeTo(spawnPos);
+      var rangeB = b.getRangeTo(spawnPos);
+      if (rangeA !== rangeB) return rangeA - rangeB;
+
+      var roadA = self.isAdjacentToRoadOrBlueprint(room, a) ? 0 : 1;
+      var roadB = self.isAdjacentToRoadOrBlueprint(room, b) ? 0 : 1;
+      return roadA - roadB;
+    });
+
+    var bestPos = candidates[0];
+    if (bestPos) {
+      var res = this.createSite(
+        room,
+        bestPos.x,
+        bestPos.y,
+        STRUCTURE_CONTAINER,
+        85
+      );
+      if (res === OK) {
+        if (room.memory) {
+          var memObj = {
+            x: bestPos.x,
+            y: bestPos.y,
+            id: null,
+          };
+          room.memory.storageContainer = memObj;
+          room.memory.spawnerContainer = memObj;
+        }
+        // Connect container to road network
+        this.connectToRoadNetwork(room, bestPos);
+      }
+    }
+  },
+
+  /**
+   * Helper alias for buildSpawnerStorageContainer.
+   */
+  buildSpawnContainer: function (spawner, precomputedInsideGrid) {
+    return this.buildSpawnerStorageContainer(spawner, precomputedInsideGrid);
+  },
+
+  /**
+   * Helper alias for buildSpawnerStorageContainer.
+   */
+  buildStorageContainer: function (spawner, precomputedInsideGrid) {
+    return this.buildSpawnerStorageContainer(spawner, precomputedInsideGrid);
+  },
+
+  /**
+   * Places central storage (STRUCTURE_STORAGE) near the spawner once the controller reaches RCL 4.
+   * @param {StructureSpawn} spawner
+   * @param {Uint8Array} [precomputedInsideGrid]
+   */
+  buildStorageStructure: function (spawner, precomputedInsideGrid) {
+    var room = spawner.room;
+    if (!room || !room.controller || room.controller.level < 4) return;
+    this.ensureTickState(room);
+
+    var maxStorage =
+      CONTROLLER_STRUCTURES[STRUCTURE_STORAGE][room.controller.level] || 0;
+    if (maxStorage <= 0) return;
+
+    if (room.storage) return;
+
+    var existingSites = room.find(FIND_CONSTRUCTION_SITES, {
+      filter: { structureType: STRUCTURE_STORAGE },
+    });
+    if (existingSites.length > 0) return;
+
+    var hasInTickStorage = this._inTickSites.some(function (s) {
+      return s.structureType === STRUCTURE_STORAGE;
+    });
+    if (hasInTickStorage) return;
+
+    if (this.getTotalSiteCount(room) >= 80) return;
+
+    var self = this;
+    var spawnPos = spawner.pos;
+    var terrain = room.getTerrain();
+
+    var insidePerimeter = precomputedInsideGrid;
+    if (!insidePerimeter) {
+      var calc = minCut.calculate(room, this.getProtectedRects(spawner));
+      insidePerimeter = calc.insideGrid;
+    }
+
+    var isValidStorageCandidate = function (cx, cy) {
+      if (cx < 2 || cx > 47 || cy < 2 || cy > 47) return false;
+      if (cx === spawnPos.x && cy === spawnPos.y) return false;
+      if (terrain.get(cx, cy) === TERRAIN_MASK_WALL) return false;
+      if (self.isNearSource(room, { x: cx, y: cy })) return false;
+      if (room.controller && room.controller.pos.getRangeTo(cx, cy) <= 3) return false;
+
+      // Do not block cardinal roads around spawner
+      if (Math.abs(cx - spawnPos.x) + Math.abs(cy - spawnPos.y) === 1) {
+        return false;
+      }
+
+      if (self.hasInTickSiteAt(room, cx, cy)) return false;
+
+      var structures = room.lookForAt(LOOK_STRUCTURES, cx, cy);
+      if (
+        structures.some(
+          (s) =>
+            s.structureType !== STRUCTURE_ROAD &&
+            s.structureType !== STRUCTURE_RAMPART
+        )
+      ) {
+        return false;
+      }
+      var sites = room.lookForAt(LOOK_CONSTRUCTION_SITES, cx, cy);
+      if (
+        sites.some(
+          (s) =>
+            s.structureType !== STRUCTURE_ROAD &&
+            s.structureType !== STRUCTURE_RAMPART
+        )
+      ) {
+        return false;
+      }
+      return true;
+    };
+
+    var candidates = [];
+    for (let radius = 1; radius <= 4; radius++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+          let cx = spawnPos.x + dx;
+          let cy = spawnPos.y + dy;
+          if (!isValidStorageCandidate(cx, cy)) continue;
+
+          var idx = cy * 50 + cx;
+          if (insidePerimeter && !insidePerimeter[idx]) continue;
+
+          candidates.push(new RoomPosition(cx, cy, room.name));
+        }
+      }
+    }
+
+    if (candidates.length === 0) return;
+
+    candidates.sort(function (a, b) {
+      var rangeA = a.getRangeTo(spawnPos);
+      var rangeB = b.getRangeTo(spawnPos);
+      if (rangeA !== rangeB) return rangeA - rangeB;
+      var roadA = self.isAdjacentToRoadOrBlueprint(room, a) ? 0 : 1;
+      var roadB = self.isAdjacentToRoadOrBlueprint(room, b) ? 0 : 1;
+      return roadA - roadB;
+    });
+
+    var bestPos = candidates[0];
+    if (bestPos) {
+      var res = this.createSite(
+        room,
+        bestPos.x,
+        bestPos.y,
+        STRUCTURE_STORAGE,
+        80
+      );
+      if (res === OK) {
         this.connectToRoadNetwork(room, bestPos);
       }
     }
@@ -964,6 +1386,30 @@ var roomBuilder = {
       if (this._inTickSites[it].structureType === STRUCTURE_EXTENSION) {
         addPosToProtected(this._inTickSites[it]);
       }
+    }
+
+    // Include controller container in protected zones if present
+    if (room.controller) {
+      var ctrlContainer =
+        room.controller.pos.findInRange(FIND_STRUCTURES, 4, {
+          filter: { structureType: STRUCTURE_CONTAINER },
+        })[0] ||
+        room.controller.pos.findInRange(FIND_CONSTRUCTION_SITES, 4, {
+          filter: { structureType: STRUCTURE_CONTAINER },
+        })[0];
+
+      if (ctrlContainer) {
+        addPosToProtected(ctrlContainer.pos);
+      }
+    }
+
+    // Include storage container near spawner in protected zones if present
+    if (
+      room.memory &&
+      (room.memory.storageContainer || room.memory.spawnerContainer)
+    ) {
+      var scMem = room.memory.storageContainer || room.memory.spawnerContainer;
+      addPosToProtected(scMem);
     }
 
     return protectedRects;
