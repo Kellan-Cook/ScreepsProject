@@ -316,15 +316,7 @@ var rolestoragemanager = {
           },
         });
 
-        // Priority 2: Withdraw from spawner storage container ONLY if spawn, extensions, towers, or controller container need energy
-        if (!sourceStructure && self.nonStorageNeedsEnergy(creep)) {
-          sourceStructure = self.getSpawnerContainerWithEnergy(
-            creep.room,
-            creep
-          );
-        }
-
-        // Priority 3: Withdraw from central storage ONLY if a non-storage destination needs energy
+        // Priority 2: Withdraw from central storage (near spawner) ONLY if a non-storage destination needs energy
         if (
           !sourceStructure &&
            creep.room.storage &&
@@ -341,6 +333,14 @@ var rolestoragemanager = {
               );
             },
           });
+        }
+
+        // Priority 3: Fallback withdraw from legacy spawner container if non-storage destination needs energy
+        if (!sourceStructure && self.nonStorageNeedsEnergy(creep)) {
+          sourceStructure = self.getSpawnerContainerWithEnergy(
+            creep.room,
+            creep
+          );
         }
 
         if (sourceStructure) {
@@ -412,24 +412,31 @@ var rolestoragemanager = {
           );
         }
 
-        // Priority 4: Spawner Storage Container (fills dedicated storage container near spawner)
+        // Priority 4: Central Storage (buffers energy at base near spawner)
+        if (!destStructure) {
+          if (
+            creep.room.storage &&
+            creep.room.storage.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          ) {
+            destStructure = creep.room.storage;
+          } else {
+            destStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+              filter: (structure) => {
+                return (
+                  structure.structureType == STRUCTURE_STORAGE &&
+                  structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+                );
+              },
+            });
+          }
+        }
+
+        // Priority 5: Fallback legacy spawner container if storage not yet built
         if (!destStructure) {
           destStructure = self.getSpawnerContainerWithSpace(
             creep.room,
             creep
           );
-        }
-
-        // Priority 5: Central Storage
-        if (!destStructure) {
-          destStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (structure) => {
-              return (
-                structure.structureType == STRUCTURE_STORAGE &&
-                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-              );
-            },
-          });
         }
 
         if (destStructure) {
